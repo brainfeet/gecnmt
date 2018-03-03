@@ -20,7 +20,7 @@ def get_token_map(token):
             "lemma_": token.lemma_,
             "lower_": token.lower_,
             "tag_": token.tag_,
-            "text": token.text}
+            "text_with_ws": token.text_with_ws}
 
 
 parse_stringify = compose(json.dumps,
