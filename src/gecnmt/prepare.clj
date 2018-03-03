@@ -189,16 +189,18 @@
         count
         :input-bpes))
 
+(defn make-get-filename-content
+  [dataset]
+  (fn [m]
+    [(get-dataset-path dataset "split" (get-count-filename m))
+     (str (generate-string m) "\n")]))
+
 (defn spit-dataset
   [dataset n coll]
   (if (= dataset "simple")
     0
-    (run! (aid/build appending-spit-parents
-                     (comp (partial get-dataset-path dataset "split")
-                           get-count-filename)
-                     (comp (partial (aid/flip str) "\n")
-                           generate-string))
-          coll)))
+    (run! (partial apply appending-spit-parents)
+          (map (make-get-filename-content dataset) coll))))
 
 (defn split-dataset
   [dataset n]
