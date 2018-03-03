@@ -195,37 +195,50 @@
     [(get-dataset-path dataset split (get-count-filename m))
      (str (generate-string m) "\n")]))
 
+;(defn spit-dataset
+;  [dataset coll & more]
+;  (if (= dataset "simple")
+;    (run! (partial apply appending-spit-parents)
+;          (if (= dataset "simple")
+;            (s/select [s/ALL s/ALL]
+;                      (map (partial aid/funcall map)
+;                           (map (partial make-get-filename-content dataset)
+;                                ["validation" "training"])
+;                           (split-at (first more) coll)))
+;            (map (make-get-filename-content dataset "validation") coll)))))
+
 (defn spit-dataset
-  [dataset n coll]
-  (if (= dataset "simple")
-    (run! (partial apply appending-spit-parents)
-          (if (= dataset "simple")
-            (s/select [s/ALL s/ALL]
-                      (map (partial aid/funcall map)
-                           (map (partial make-get-filename-content dataset)
-                                ["validation" "training"])
-                           (split-at n coll)))
-            (map (make-get-filename-content dataset "validation") coll)))))
+  [dataset coll & more]
+  (run! (partial apply appending-spit-parents)
+        (if (= dataset "simple")
+          (s/select [s/ALL s/ALL]
+                    (map (partial aid/funcall map)
+                         (map (partial make-get-filename-content dataset)
+                              ["validation" "training"])
+                         (split-at (first more) coll)))
+          (map (make-get-filename-content dataset "validation") coll))))
+
 
 (defn split-dataset
-  [dataset n]
+  [dataset & more]
   (with-open [random-file (->> "random.txt"
                                (get-dataset-path dataset)
                                io/reader)]
     (with-open [bpe-file (->> "bpe.txt"
                               (get-dataset-path dataset)
                               io/reader)]
-      (spit-dataset dataset
-                    n
-                    (structure {:bpe    (line-seq bpe-file)
-                                :index  (->> "index.edn"
-                                             (get-dataset-path dataset)
-                                             slurp
-                                             read-string)
-                                :random (line-seq random-file)})))))
+      (apply spit-dataset
+             dataset
+             (structure {:bpe    (line-seq bpe-file)
+                         :index  (->> "index.edn"
+                                      (get-dataset-path dataset)
+                                      slurp
+                                      read-string)
+                         :random (line-seq random-file)})
+             more))))
 
 (defn mung
-  [dataset n]
+  [dataset & more]
   (aid/mlet [_ (if (= dataset "simple")
                  (aid/mlet [_ (extract)]
                            (either/right (combine)))
@@ -237,4 +250,4 @@
              _ (learn-bpe dataset)
              _ (apply-bpe dataset)]
             (build-vocabulary dataset)
-            (split-dataset dataset n)))
+            (apply split-dataset dataset more)))
