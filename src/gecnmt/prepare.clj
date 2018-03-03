@@ -1,11 +1,13 @@
 (ns gecnmt.prepare
-  (:require [clojure.java.shell :as sh]
+  (:require [clojure.java.io :as io]
+            [clojure.java.shell :as sh]
             [clojure.string :as str]
             [aid.core :as aid]
             [cheshire.core :refer :all]
             [me.raynes.fs :as fs]
             [gecnmt.command :as command]
-            [gecnmt.helpers :as helpers]))
+            [gecnmt.helpers :as helpers]
+            [com.rpl.specter :as s]))
 
 (def get-dataset-path
   (partial helpers/join-paths "resources/dataset"))
@@ -62,3 +64,24 @@
                  "--path")
         fs/absolute
         (partial (aid/flip get-dataset-path) "combined.txt")))
+
+(def parse-keywordize
+  (partial (aid/flip parse-string) true))
+
+(def split-sentences*
+  (comp (partial map flatten)
+        (partial partition 2)
+        (partial partition-by :is_sent_start)
+        (partial s/setval* [s/FIRST :is_sent_start] true)
+        parse-keywordize))
+
+(defn spit-line
+  [f content]
+  (spit f (str content "\n") :append true))
+
+(defn split-sentences
+  [dataset]
+  (with-open [f (io/reader ((partial (aid/flip get-dataset-path) "parsed.txt") dataset))]
+    (run! (partial spit-line ((partial (aid/flip get-dataset-path) "split.txt") dataset))
+          (map vec (mapcat split-sentences*
+                           (line-seq f))))))
