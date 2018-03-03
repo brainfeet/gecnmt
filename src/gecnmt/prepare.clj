@@ -93,4 +93,5 @@
     (->> f
          line-seq
          (mapcat split-sentences*)
-         (run! (partial appending-spit (get-dataset-path dataset "split.txt"))))))
+         (run! (partial appending-spit (get-dataset-path dataset
+                                                         "split.txt"))))))
