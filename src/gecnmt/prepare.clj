@@ -222,10 +222,8 @@
 (defn mung
   [dataset]
   (aid/mlet [_ (if (= dataset "simple")
-                 (aid/mlet [_ (extract dataset)]
-                           (-> dataset
-                               combine
-                               either/right))
+                 (aid/mlet [_ (extract)]
+                           (either/right (combine)))
                  (either/right ""))
              _ (parse dataset)
              _ (either/right (split-sentences dataset))
@@ -234,3 +232,4 @@
              _ (learn-bpe dataset)
              _ (apply-bpe dataset)]
             (build-vocabulary dataset)))
+
