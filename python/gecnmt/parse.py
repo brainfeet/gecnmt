@@ -85,13 +85,16 @@ def dorun(coll):
         pass
 
 
+run_ = compose(dorun, map)
+
+
 def parse():
     with open(get_combined_path()) as f:
-        return dorun(map(compose(partial(appending_spit,
-                                         get_parsed_path(get_combined_path())),
-                                 append_newline,
-                                 parse_stringify),
-                         line_seq(f)))
+        return run_(compose(partial(appending_spit,
+                                    get_parsed_path(get_combined_path())),
+                            append_newline,
+                            parse_stringify),
+                    line_seq(f))
 
 
 if __name__ == "__main__":
