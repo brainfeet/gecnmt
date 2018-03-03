@@ -174,16 +174,18 @@
 
 (defn structure
   [{:keys [bpe index random]}]
-  (map (fn [tokens bpes]
-         {:input-bpes  (->> bpes
-                            (s/setval s/BEGINNING [0])
-                            drop-last)
-          :output-bpes bpes
-          :tokens      tokens})
-       random
+  (->> bpe
        (map (comp (partial map index)
-                  (partial (aid/flip str/split) #" "))
-            bpe)))
+                  (partial (aid/flip str/split) #" ")))
+       (map (fn [tokens bpes]
+              (-> {:input-bpes  (->> bpes
+                                     (s/setval s/BEGINNING [0])
+                                     drop-last)
+                   :output-bpes bpes
+                   :tokens      tokens}
+                  generate-string
+                  prn-str))
+            random)))
 
 (defn split-dataset
   [dataset n]
@@ -193,12 +195,12 @@
     (with-open [bpe-file (->> "bpe.txt"
                               (get-dataset-path dataset)
                               io/reader)]
-      (structure {:bpe    (line-seq bpe-file)
-                  :index  (->> "index.edn"
-                               (get-dataset-path dataset)
-                               slurp
-                               read-string)
-                  :random (line-seq random-file)}))))
+      (println (structure {:bpe    (line-seq bpe-file)
+                           :index  (->> "index.edn"
+                                        (get-dataset-path dataset)
+                                        slurp
+                                        read-string)
+                           :random (line-seq random-file)})))))
 
 (defn mung
   [dataset]
