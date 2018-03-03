@@ -14,7 +14,8 @@
   (partial helpers/join-paths "resources/dataset"))
 
 (def extract
-  (partial command/python "bin/WikiExtractor.py"
+  (partial command/python
+           "bin/WikiExtractor.py"
            "--json"
            "-o"
            (get-dataset-path "simple/extracted")
@@ -131,6 +132,26 @@
                        :input  "split.txt"
                        :output "text.txt"}))
 
+(defn learn-bpe
+  [dataset]
+  (command/python "bin/learn_bpe.py"
+                  "-s"
+                  "10000"
+                  "<"
+                  (get-dataset-path dataset "text.txt")
+                  ">"
+                  (get-dataset-path dataset "codes.txt")))
+
+(defn apply-bpe
+  [dataset]
+  (command/python "bin/apply_bpe.py"
+                  "-c"
+                  (get-dataset-path dataset "codes.txt")
+                  "<"
+                  (get-dataset-path dataset "text.txt")
+                  ">"
+                  (get-dataset-path dataset "bpe.txt")))
+
 (defn mung
   [dataset]
   (aid/mlet [_ (if (= dataset "simple")
@@ -141,5 +162,7 @@
                  (either/right ""))
              _ (parse dataset)
              _ (either/right (split-sentences dataset))
-             _ (randomize dataset)]
-            (get-text dataset)))
+             _ (randomize dataset)
+             _ (either/right (get-text dataset))
+             _ (learn-bpe dataset)
+             _ (apply-bpe dataset)]))
