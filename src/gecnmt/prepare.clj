@@ -195,18 +195,6 @@
     [(get-dataset-path dataset split (get-count-filename m))
      (str (generate-string m) "\n")]))
 
-;(defn spit-dataset
-;  [dataset coll & more]
-;  (if (= dataset "simple")
-;    (run! (partial apply appending-spit-parents)
-;          (if (= dataset "simple")
-;            (s/select [s/ALL s/ALL]
-;                      (map (partial aid/funcall map)
-;                           (map (partial make-get-filename-content dataset)
-;                                ["validation" "training"])
-;                           (split-at (first more) coll)))
-;            (map (make-get-filename-content dataset "validation") coll)))))
-
 (defn spit-dataset
   [dataset coll & more]
   (run! (partial apply appending-spit-parents)
