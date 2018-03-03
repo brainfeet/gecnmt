@@ -68,20 +68,23 @@
 (def parse-keywordize
   (partial (aid/flip parse-string) true))
 
-(def append-newline
-  (partial (aid/flip str) "\n"))
-
 (def is-ascii?
   (partial every? (comp (partial > 128)
                         int)))
 
+(def has-newline?
+  (partial re-find #".*\n.*"))
+
 (def split-sentences*
-  (comp (partial map (comp append-newline
-                           str
-                           vec
-                           (partial filter (comp is-ascii?
-                                                 :text_with_ws))
-                           flatten))
+  (comp (partial map
+                 (comp prn-str
+                       vec
+                       (partial filter
+                                (comp (aid/build and
+                                                 is-ascii?
+                                                 (complement has-newline?))
+                                      :text))
+                       flatten))
         (partial partition 2)
         (partial partition-by :is_sent_start)
         (partial s/setval* [s/FIRST :is_sent_start] true)
