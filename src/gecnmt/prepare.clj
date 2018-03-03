@@ -111,3 +111,20 @@
   (aid/build (partial command/shuf "-o")
              (partial (aid/flip get-dataset-path) "random.txt")
              (partial (aid/flip get-dataset-path) "split.txt")))
+
+(def append-newline
+  (partial (aid/flip str) "\n"))
+
+(defn get-text
+  [dataset]
+  (with-open [f (->> "split.txt"
+                     (get-dataset-path dataset)
+                     io/reader)]
+    (->> f
+         line-seq
+         (map read-string)
+         (s/transform [s/ALL s/ALL] :text)
+         (map (partial str/join " "))
+         (map append-newline)
+         (run! (partial appending-spit (get-dataset-path dataset
+                                                         "text.txt"))))))
