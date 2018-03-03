@@ -123,19 +123,13 @@
 (def append-newline
   (partial (aid/flip str) "\n"))
 
-(defn get-text
-  [dataset]
-  (with-open [f (->> "split.txt"
-                     (get-dataset-path dataset)
-                     io/reader)]
-    (->> f
-         line-seq
-         (map read-string)
-         (s/transform [s/ALL s/ALL] :text)
-         (map (comp append-newline
-                    (partial str/join " ")))
-         (run! (partial appending-spit (get-dataset-path dataset
-                                                         "text.txt"))))))
+(def get-text
+  (make-process-lines {:f      (comp (partial map (comp append-newline
+                                                        (partial str/join " ")))
+                                     (partial s/transform* [s/ALL s/ALL] :text)
+                                     (partial map read-string))
+                       :input  "split.txt"
+                       :output "text.txt"}))
 
 (defn mung
   [dataset]
