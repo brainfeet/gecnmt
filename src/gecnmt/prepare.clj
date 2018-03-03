@@ -71,10 +71,16 @@
 (def append-newline
   (partial (aid/flip str) "\n"))
 
+(def is-ascii?
+  (partial every? (comp (partial > 128)
+                        int)))
+
 (def split-sentences*
   (comp (partial map (comp append-newline
                            str
                            vec
+                           (partial filter (comp is-ascii?
+                                                 :text_with_ws))
                            flatten))
         (partial partition 2)
         (partial partition-by :is_sent_start)
