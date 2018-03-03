@@ -1,5 +1,6 @@
 (ns gecnmt.prepare
-  (:require [clojure.string :as str]
+  (:require [clojure.java.shell :as sh]
+            [clojure.string :as str]
             [aid.core :as aid]
             [cheshire.core :refer :all]
             [me.raynes.fs :as fs]
@@ -47,3 +48,23 @@
   (comp (partial run! spit-isolated)
         (partial mapcat parse-extracted)
         slurp-extracted))
+
+(defn python
+  [& more]
+  (sh/with-sh-dir "python"
+                  (apply command/export
+                         "PYTHONPATH=$(pwd)"
+                         "&&"
+                         "source"
+                         "activate"
+                         "gecnmt"
+                         "&&"
+                         "python"
+                         more)))
+
+(def parse
+  (comp (partial python
+                 "gecnmt/parse.py"
+                 "--path")
+        fs/absolute
+        (partial (aid/flip get-dataset-path) "isolated")))
