@@ -18,7 +18,8 @@
            (get-dataset-path "simple/original.xml")))
 
 (def parse-keywordize
-  (partial (aid/flip parse-string) true))
+  (comp :text
+        (partial (aid/flip parse-string) true)))
 
 (def parse-extracted
   (comp (partial map parse-keywordize)
@@ -30,22 +31,15 @@
        (fs/find-files (get-dataset-path "simple/extracted"))
        (map slurp)))
 
-(defn spit-parents
-  [f & more]
-  (-> f
-      fs/parent
-      fs/mkdirs)
-  (apply spit f more))
+(defn spit-combined
+  [content]
+  (spit (get-dataset-path "simple/combined.txt")
+        content
+        :append
+        true))
 
-(def spit-isolated
-  (aid/build spit-parents
-             (comp (partial (aid/flip str) ".txt")
-                   (partial get-dataset-path "simple/isolated")
-                   :id)
-             :text))
-
-(def isolate
-  (comp (partial run! spit-isolated)
+(def combine
+  (comp (partial run! spit-combined)
         (partial mapcat parse-extracted)
         slurp-extracted))
 
