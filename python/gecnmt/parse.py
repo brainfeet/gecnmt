@@ -1,21 +1,18 @@
 import argparse
-import glob
 import json
-import os
+import builtins
 import re
 
 from funcy import *
 import spacy
 
-from gecnmt.clojure import *
-
 nlp = spacy.load("en")
 
 
-def get_isolated_paths():
+def get_combined_path():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path")
-    return glob.glob(parser.parse_args().path + "/*")
+    return parser.parse_args().path
 
 
 def get_token_map(token):
@@ -31,29 +28,70 @@ parse_stringify = compose(json.dumps,
                           partial(map, get_token_map),
                           nlp)
 
-get_parsed_path = partial(re.sub, r"isolated/([^\/]+).txt$", r"parsed/\1.json")
+
+def replace(s, match, replacement):
+    return re.sub(match, replacement, s)
 
 
-def spit(path, s):
-    with open(path, "w") as file:
-        file.write(s)
+def get_parsed_path(path):
+    return replace(path, "combined.txt", "parsed.txt")
 
 
-def mkdirs(path):
-    if not os.path.exists(os.path.dirname(path)):
-        os.makedirs(os.path.dirname(path))
+def if_(test, then, else_):
+    if test:
+        return then
+    return else_
 
 
-def spit_parents(path, s):
-    mkdirs(path)
-    spit(path, s)
+def spit(f, content, append=False):
+    with open(f, if_(append,
+                     "a",
+                     "w")) as file:
+        file.write(content)
+
+
+def appending_spit(f, content):
+    spit(f, content, append=True)
+
+
+def str(*more):
+    return str_join("", walk(builtins.str, more))
+
+
+def apply(f, *more):
+    return f(*butlast(more), *last(more))
+
+
+def flip(f):
+    def g(x, *more):
+        if empty(more):
+            def h(y, *more_):
+                apply(f, y, x, more_)
+            return h
+        return apply(f, first(more), x, rest(more))
+    return g
+
+
+append_newline = partial(flip(str), "\n")
+
+
+def line_seq(file):
+    for line in file:
+        yield line
+
+
+def dorun(coll):
+    for _ in coll:
+        pass
 
 
 def parse():
-    tuple(map(spit_parents,
-              map(get_parsed_path, get_isolated_paths()),
-              map(compose(parse_stringify, slurp),
-                  get_isolated_paths())))
+    with open(get_combined_path()) as f:
+        return dorun(map(compose(partial(appending_spit,
+                                         get_parsed_path(get_combined_path())),
+                                 append_newline,
+                                 parse_stringify),
+                         line_seq(f)))
 
 
 if __name__ == "__main__":

@@ -61,4 +61,4 @@
                  "gecnmt/parse.py"
                  "--path")
         fs/absolute
-        (partial (aid/flip get-dataset-path) "isolated")))
+        (partial (aid/flip get-dataset-path) "combined.txt")))
