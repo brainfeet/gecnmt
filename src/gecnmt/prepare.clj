@@ -124,7 +124,7 @@
          line-seq
          (map read-string)
          (s/transform [s/ALL s/ALL] :text)
-         (map (partial str/join " "))
-         (map append-newline)
+         (map (comp append-newline
+                    (partial str/join " ")))
          (run! (partial appending-spit (get-dataset-path dataset
                                                          "text.txt"))))))
