@@ -172,6 +172,34 @@
                 (comp (partial spit (get-dataset-path dataset "index.edn"))
                       set/map-invert))))))
 
+(defn structure
+  [{:keys [bpe index random]}]
+  (map (fn [tokens bpes]
+         {:input-bpes  (->> bpes
+                            (s/setval s/BEGINNING [0])
+                            drop-last)
+          :output-bpes bpes
+          :tokens      tokens})
+       random
+       (map (comp (partial map index)
+                  (partial (aid/flip str/split) #" "))
+            bpe)))
+
+(defn split-dataset
+  [dataset n]
+  (with-open [random-file (->> "random.txt"
+                               (get-dataset-path dataset)
+                               io/reader)]
+    (with-open [bpe-file (->> "bpe.txt"
+                              (get-dataset-path dataset)
+                              io/reader)]
+      (structure {:bpe    (line-seq bpe-file)
+                  :index  (->> "index.edn"
+                               (get-dataset-path dataset)
+                               slurp
+                               read-string)
+                  :random (line-seq random-file)}))))
+
 (defn mung
   [dataset]
   (aid/mlet [_ (if (= dataset "simple")
