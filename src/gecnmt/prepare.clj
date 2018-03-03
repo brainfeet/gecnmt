@@ -75,6 +75,7 @@
 (def has-newline?
   (partial re-find #".*\n.*"))
 
+
 (def split-sentences*
   (comp (partial map
                  (comp prn-str
@@ -82,13 +83,15 @@
                        (partial filter
                                 (comp (aid/build and
                                                  is-ascii?
-                                                 (complement has-newline?))
+                                                 (complement has-newline?)
+                                                 (complement str/blank?))
                                       :text))
                        flatten))
         (partial partition 2)
         (partial partition-by :is_sent_start)
         (partial s/setval* [s/FIRST :is_sent_start] true)
         parse-keywordize))
+
 
 (defn appending-spit
   [f content]
