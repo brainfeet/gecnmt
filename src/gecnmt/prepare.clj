@@ -225,7 +225,7 @@
                                 :random (line-seq random-file)})))))
 
 (defn mung
-  [dataset]
+  [dataset n]
   (aid/mlet [_ (if (= dataset "simple")
                  (aid/mlet [_ (extract)]
                            (either/right (combine)))
@@ -236,5 +236,5 @@
              _ (either/right (get-text dataset))
              _ (learn-bpe dataset)
              _ (apply-bpe dataset)]
-            (build-vocabulary dataset)))
-
+            (build-vocabulary dataset)
+            (split-dataset dataset n)))
