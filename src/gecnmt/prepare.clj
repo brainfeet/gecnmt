@@ -98,16 +98,23 @@
   [f content]
   (spit f content :append true))
 
-(defn split-sentences
-  [dataset]
-  (with-open [f (->> "parsed.txt"
-                     (get-dataset-path dataset)
-                     io/reader)]
-    (->> f
-         line-seq
-         (mapcat split-sentences*)
-         (run! (partial appending-spit (get-dataset-path dataset
-                                                         "split.txt"))))))
+(defn make-process-lines
+  [{:keys [f input output]}]
+  (fn [dataset]
+    (with-open [file (->> input
+                          (get-dataset-path dataset)
+                          io/reader)]
+      (->> file
+           line-seq
+           f
+           (run! (partial appending-spit (get-dataset-path dataset
+                                                           output)))))))
+
+(def split-sentences
+  (make-process-lines {:f      (partial mapcat split-sentences*)
+                       :input  "parsed.txt"
+                       :output "split.txt"}))
+
 (def randomize
   (aid/build (partial command/shuf "-o")
              (partial (aid/flip get-dataset-path) "random.txt")
