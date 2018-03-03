@@ -80,4 +80,3 @@
         :out))
 
 (defcommands (parse-ent ent))
-
