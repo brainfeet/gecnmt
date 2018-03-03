@@ -101,3 +101,7 @@
          (mapcat split-sentences*)
          (run! (partial appending-spit (get-dataset-path dataset
                                                          "split.txt"))))))
+(def randomize
+  (aid/build (partial command/shuf "-o")
+             (partial (aid/flip get-dataset-path) "random.txt")
+             (partial (aid/flip get-dataset-path) "split.txt")))
