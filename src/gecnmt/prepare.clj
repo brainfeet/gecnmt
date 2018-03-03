@@ -17,12 +17,9 @@
            (get-dataset-path "simple/extracted")
            (get-dataset-path "simple/original.xml")))
 
-(def parse-keywordize
-  (comp :text
-        (partial (aid/flip parse-string) true)))
-
 (def parse-extracted
-  (comp (partial map parse-keywordize)
+  (comp (partial map (comp :text
+                           (partial (aid/flip parse-string) true)))
         str/split-lines))
 
 (defn slurp-extracted
