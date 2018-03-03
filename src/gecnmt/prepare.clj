@@ -36,15 +36,13 @@
        (fs/find-files (get-dataset-path "simple/extracted"))
        (map slurp)))
 
-(defn spit-combined
-  [content]
-  (spit (get-dataset-path "simple/combined.txt")
-        content
-        :append
-        true))
+(defn appending-spit
+  [f content]
+  (spit f content :append true))
 
 (def combine
-  (comp (partial run! spit-combined)
+  (comp (partial run! (partial appending-spit
+                               (get-dataset-path "simple/combined.txt")))
         (partial mapcat parse-extracted)
         slurp-extracted))
 
@@ -78,7 +76,6 @@
 (def has-newline?
   (partial re-find #".*\n.*"))
 
-
 (def split-sentences*
   (comp (partial map
                  (comp prn-str
@@ -94,10 +91,6 @@
         (partial partition-by :is_sent_start)
         (partial s/setval* [s/FIRST :is_sent_start] true)
         parse-keywordize))
-
-(defn appending-spit
-  [f content]
-  (spit f content :append true))
 
 (defn make-process-lines
   [{:keys [f input output]}]
@@ -194,12 +187,12 @@
     (with-open [bpe-file (->> "bpe.txt"
                               (get-dataset-path dataset)
                               io/reader)]
-      (println (structure {:bpe    (line-seq bpe-file)
-                           :index  (->> "index.edn"
-                                        (get-dataset-path dataset)
-                                        slurp
-                                        read-string)
-                           :random (line-seq random-file)})))))
+      (structure {:bpe    (line-seq bpe-file)
+                  :index  (->> "index.edn"
+                               (get-dataset-path dataset)
+                               slurp
+                               read-string)
+                  :random (line-seq random-file)}))))
 
 (defn mung
   [dataset]
@@ -214,4 +207,5 @@
              _ (randomize dataset)
              _ (either/right (get-text dataset))
              _ (learn-bpe dataset)
-             _ (apply-bpe dataset)]))
+             _ (apply-bpe dataset)]
+            (build-vocabulary dataset)))
