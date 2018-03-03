@@ -36,12 +36,19 @@
        (fs/find-files (get-dataset-path "simple/extracted"))
        (map slurp)))
 
-(defn appending-spit
+(defn spit-parents
+  [f & more]
+  (-> f
+      fs/parent
+      fs/mkdirs)
+  (apply spit f more))
+
+(defn appending-spit-parents
   [f content]
-  (spit f content :append true))
+  (spit-parents f content :append true))
 
 (def combine
-  (comp (partial run! (partial appending-spit
+  (comp (partial run! (partial appending-spit-parents
                                (get-dataset-path "simple/combined.txt")))
         (partial mapcat parse-extracted)
         slurp-extracted))
@@ -101,8 +108,8 @@
       (->> file
            line-seq
            f
-           (run! (partial appending-spit (get-dataset-path dataset
-                                                           output)))))))
+           (run! (partial appending-spit-parents (get-dataset-path dataset
+                                                                   output)))))))
 
 (def split-sentences
   (make-process-lines {:f      (partial mapcat split-sentences*)
@@ -170,14 +177,28 @@
        (map (comp (partial map index)
                   (partial (aid/flip str/split) #" ")))
        (map (fn [tokens bpes]
-              (-> {:input-bpes  (->> bpes
-                                     (s/setval s/BEGINNING [0])
-                                     drop-last)
-                   :output-bpes bpes
-                   :tokens      tokens}
-                  generate-string
-                  prn-str))
+              {:input-bpes  (->> bpes
+                                 (s/setval s/BEGINNING [0])
+                                 drop-last)
+               :output-bpes bpes
+               :tokens      (read-string tokens)})
             random)))
+
+(def get-count-filename
+  (comp (partial (aid/flip str) ".txt")
+        count
+        :input-bpes))
+
+(defn spit-dataset
+  [dataset n coll]
+  (if (= dataset "simple")
+    0
+    (run! (aid/build appending-spit-parents
+                     (comp (partial get-dataset-path dataset "split")
+                           get-count-filename)
+                     (comp (partial (aid/flip str) "\n")
+                           generate-string))
+          coll)))
 
 (defn split-dataset
   [dataset n]
@@ -187,12 +208,14 @@
     (with-open [bpe-file (->> "bpe.txt"
                               (get-dataset-path dataset)
                               io/reader)]
-      (structure {:bpe    (line-seq bpe-file)
-                  :index  (->> "index.edn"
-                               (get-dataset-path dataset)
-                               slurp
-                               read-string)
-                  :random (line-seq random-file)}))))
+      (spit-dataset dataset
+                    n
+                    (structure {:bpe    (line-seq bpe-file)
+                                :index  (->> "index.edn"
+                                             (get-dataset-path dataset)
+                                             slurp
+                                             read-string)
+                                :random (line-seq random-file)})))))
 
 (defn mung
   [dataset]
