@@ -95,7 +95,6 @@
         (partial s/setval* [s/FIRST :is_sent_start] true)
         parse-keywordize))
 
-
 (defn appending-spit
   [f content]
   (spit f content :append true))
