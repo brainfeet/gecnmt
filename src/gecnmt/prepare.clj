@@ -68,20 +68,29 @@
 (def parse-keywordize
   (partial (aid/flip parse-string) true))
 
+(def append-newline
+  (partial (aid/flip str) "\n"))
+
 (def split-sentences*
-  (comp (partial map flatten)
+  (comp (partial map (comp append-newline
+                           str
+                           vec
+                           flatten))
         (partial partition 2)
         (partial partition-by :is_sent_start)
         (partial s/setval* [s/FIRST :is_sent_start] true)
         parse-keywordize))
 
-(defn spit-line
+(defn appending-spit
   [f content]
-  (spit f (str content "\n") :append true))
+  (spit f content :append true))
 
 (defn split-sentences
   [dataset]
-  (with-open [f (io/reader ((partial (aid/flip get-dataset-path) "parsed.txt") dataset))]
-    (run! (partial spit-line ((partial (aid/flip get-dataset-path) "split.txt") dataset))
-          (map vec (mapcat split-sentences*
-                           (line-seq f))))))
+  (with-open [f (->> "parsed.txt"
+                     (get-dataset-path dataset)
+                     io/reader)]
+    (->> f
+         line-seq
+         (mapcat split-sentences*)
+         (run! (partial appending-spit (get-dataset-path dataset "split.txt"))))))
