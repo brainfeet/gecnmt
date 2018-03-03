@@ -1,6 +1,7 @@
 (ns gecnmt.prepare
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
+            [clojure.set :as set]
             [clojure.string :as str]
             [aid.core :as aid]
             [cats.monad.either :as either]
@@ -151,6 +152,25 @@
                   (get-dataset-path dataset "text.txt")
                   ">"
                   (get-dataset-path dataset "bpe.txt")))
+
+(defn build-vocabulary
+  [dataset]
+  (with-open [f (->> "bpe.txt"
+                     (get-dataset-path dataset)
+                     io/reader)]
+    (->> f
+         line-seq
+         (mapcat (partial (aid/flip str/split) #" "))
+         (reduce conj #{})
+         (map-indexed (fn [index word]
+                        ;consider EOS and SOS tokens
+                        {(+ 2 index) word}))
+         (apply merge {0 "<SOS>"
+                       1 "<EOS>"})
+         ((juxt (comp (partial spit (get-dataset-path dataset "word.json"))
+                      generate-string)
+                (comp (partial spit (get-dataset-path dataset "index.edn"))
+                      set/map-invert))))))
 
 (defn mung
   [dataset]
