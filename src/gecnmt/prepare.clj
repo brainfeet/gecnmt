@@ -3,11 +3,12 @@
             [clojure.java.shell :as sh]
             [clojure.string :as str]
             [aid.core :as aid]
+            [cats.monad.either :as either]
             [cheshire.core :refer :all]
+            [com.rpl.specter :as s]
             [me.raynes.fs :as fs]
             [gecnmt.command :as command]
-            [gecnmt.helpers :as helpers]
-            [com.rpl.specter :as s]))
+            [gecnmt.helpers :as helpers]))
 
 (def get-dataset-path
   (partial helpers/join-paths "resources/dataset"))
@@ -128,3 +129,16 @@
                     (partial str/join " ")))
          (run! (partial appending-spit (get-dataset-path dataset
                                                          "text.txt"))))))
+
+(defn mung
+  [dataset]
+  (aid/mlet [_ (if (= dataset "simple")
+                 (aid/mlet [_ (extract dataset)]
+                           (-> dataset
+                               combine
+                               either/right))
+                 (either/right ""))
+             _ (parse dataset)
+             _ (either/right (split-sentences dataset))
+             _ (randomize dataset)]
+            (get-text dataset)))
