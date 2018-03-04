@@ -235,7 +235,8 @@
 
 (defn get-source-targets*
   [dataset split]
-  (->> #"\d+" (fs/find-files (get-dataset-path dataset split))
+  (->> #"\d+"
+       (fs/find-files (get-dataset-path dataset split))
        (sort-by (comp read-string
                       fs/name))
        (map get-source-target)))
