@@ -1,6 +1,6 @@
 import argparse
-import json
 import builtins
+import json
 import re
 
 from funcy import *
