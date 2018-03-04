@@ -1,4 +1,5 @@
 import json
+import os.path as path
 
 from funcy import *
 import torch
@@ -77,3 +78,21 @@ def encode(m):
 
 
 dataset_path = "../resources/dataset"
+
+
+def get_sorted_path(m):
+    return path.join(dataset_path,
+                     m["dataset"],
+                     m["split"],
+                     "sorted.txt")
+
+
+def get_steps(file):
+    return line_seq(file)
+
+
+def train():
+    with open(get_sorted_path(merge(hyperparameter,
+                                    {"dataset": "simple",
+                                     "split": "training"}))) as file:
+        get_steps(file)
