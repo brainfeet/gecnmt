@@ -7,6 +7,7 @@ import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.init as init
+import torch.nn.utils.rnn as rnn
 import torchtext.vocab as vocab
 
 from gecnmt.clojure import *
@@ -67,6 +68,14 @@ def get_hidden(m):
                         m["batch_size"],
                         1),
                     m["hidden_size"])))
+
+
+def encode(m):
+    output = m["encoder"].gru(rnn.pack_padded_sequence(m["bag"],
+                                                       m["lengths"]),
+                              get_hidden(m))
+    return {"embedding": rnn.pad_packed_sequence(first(output)),
+            "hidden": last(output)}
 
 
 dataset_path = "../resources/dataset"
