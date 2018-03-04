@@ -3,10 +3,10 @@ import builtins
 import json
 import re
 
-from funcy import *
 import spacy
 
 from gecnmt.clojure import *
+import gecnmt.aid as aid
 
 nlp = spacy.load("en")
 
@@ -54,21 +54,7 @@ def str(*more):
     return str_join("", walk(builtins.str, more))
 
 
-def apply(f, *more):
-    return f(*butlast(more), *last(more))
-
-
-def flip(f):
-    def g(x, *more):
-        if empty(more):
-            def h(y, *more_):
-                apply(f, y, x, more_)
-            return h
-        return apply(f, first(more), x, rest(more))
-    return g
-
-
-append_newline = partial(flip(str), "\n")
+append_newline = partial(aid.flip(str), "\n")
 
 
 def dorun(coll):

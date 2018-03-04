@@ -183,6 +183,7 @@
               {:input-bpes  (->> bpes
                                  (s/setval s/BEGINNING [0])
                                  drop-last)
+               :length      (count bpes)
                :output-bpes bpes
                :tokens      (read-string tokens)})
             random)))

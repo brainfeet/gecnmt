@@ -2,7 +2,6 @@ import functools
 import json
 import os.path as path
 
-from funcy import *
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
@@ -11,6 +10,7 @@ import torch.nn.utils.rnn as rnn
 import torchtext.vocab as vocab
 
 from gecnmt.clojure import *
+import gecnmt.aid as aid
 
 
 def slurp(path):
@@ -140,9 +140,16 @@ def greater_than(x, y):
     return x > y
 
 
+def get(m, k):
+    return m[k]
+
+
 def get_steps(m):
     # TODO implement this function
-    return m["file"]
+    return filter(compose(partial(greater_than, m["max_length"]),
+                          count,
+                          partial(aid.flip(get), "input-bpes")),
+                  map(json.loads, (line_seq(m["file"]))))
 
 
 def train():
