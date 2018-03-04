@@ -228,6 +228,18 @@
                          :random (line-seq random-file)})
              more))))
 
+(def get-source-target
+  (juxt identity
+        (comp (partial (aid/flip join-paths) "sorted.txt")
+              fs/parent)))
+
+(defn get-source-targets
+  [dataset split]
+  (map get-source-target
+       (sort-by (comp read-string
+                      fs/name)
+                (fs/find-files (get-dataset-path dataset split) #"\d+"))))
+
 (defn mung
   [dataset & more]
   (aid/mlet [_ (if (= dataset "simple")
