@@ -36,20 +36,12 @@ def get_encoder(m):
     return model
 
 
-def multiply(*more):
-    if equal(count(more), 2):
-        return first(more) * second(more)
-    return multiply(first(more), multiply(*rest(more)))
-
-
-get_bidirectional_size = partial(multiply, 2)
-
 count = len
 
 
 def and_(*more):
     if count(more) == 2:
-        return first(more) and second(more)
+        return first(more) and last(more)
     return and_(first(more), and_(*rest(more)))
 
 
@@ -57,6 +49,15 @@ def equal(*more):
     if count(more) == 2:
         return first(more) == last(more)
     return equal(first(more), equal(*rest(more)))
+
+
+def multiply(*more):
+    if equal(count(more), 2):
+        return first(more) * last(more)
+    return multiply(first(more), multiply(*rest(more)))
+
+
+get_bidirectional_size = partial(multiply, 2)
 
 
 def get_hidden(m):
