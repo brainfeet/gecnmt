@@ -188,7 +188,7 @@
             random)))
 
 (def get-count-filename
-  (comp (partial (aid/flip str) ".txt")
+  (comp str
         count
         :input-bpes))
 
