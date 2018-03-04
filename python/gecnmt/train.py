@@ -88,10 +88,12 @@ def get_sorted_path(m):
 
 
 def get_steps(file):
+    # TODO implement this function
     return line_seq(file)
 
 
 def train():
+    # TODO reduce steps
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as file:
