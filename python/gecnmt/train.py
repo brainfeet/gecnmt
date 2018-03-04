@@ -37,7 +37,4 @@ dataset_path = "../resources/dataset"
 
 
 def get_glob(m):
-    return os.path.join(dataset_path,
-                        m["dataset"],
-                        m["split"],
-                        "*")
+    return os.path.join(dataset_path, m["dataset"], m["split"], "*")
