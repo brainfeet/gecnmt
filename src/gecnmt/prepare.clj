@@ -190,8 +190,7 @@
 
 (def get-count-filename
   (comp str
-        count
-        :input-bpes))
+        :length))
 
 (defn make-get-filename-content
   [dataset split]
@@ -236,10 +235,10 @@
 
 (defn get-source-targets*
   [dataset split]
-  (map get-source-target
+  (->> #"\d+" (fs/find-files (get-dataset-path dataset split))
        (sort-by (comp read-string
-                      fs/name)
-                (fs/find-files (get-dataset-path dataset split) #"\d+"))))
+                      fs/name))
+       (map get-source-target)))
 
 (defn get-source-targets
   [dataset]
