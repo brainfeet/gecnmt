@@ -106,9 +106,6 @@ class RichNavigator:
     def __init__(self, transform_):
         self.transform_ = transform_
 
-    def transform_(self, *args):
-        return self.transform_(*args)
-
 
 MAP_VALS = RichNavigator(walk_values)
 ALL = RichNavigator(walk)
