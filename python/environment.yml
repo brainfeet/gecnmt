@@ -72,4 +72,5 @@ dependencies:
   - funcy==1.10.1
   - pathlib==1.0.1
   - torch==0.3.1.post2
+  - torchtext==0.2.1
 
