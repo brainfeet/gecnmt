@@ -6,6 +6,8 @@ import re
 from funcy import *
 import spacy
 
+from gecnmt.clojure import *
+
 nlp = spacy.load("en")
 
 
@@ -35,12 +37,6 @@ def replace(s, match, replacement):
 
 def get_parsed_path(path):
     return replace(path, "combined.txt", "parsed.txt")
-
-
-def if_(test, then, else_):
-    if test:
-        return then
-    return else_
 
 
 def spit(f, content, append=False):
