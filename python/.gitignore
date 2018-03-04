@@ -141,5 +141,4 @@ ENV/
 .ropeproject
 
 ### gecnmt
-hyperparameter/cpu.json
-hyperparameter/gpu.json
+hyperparameter/hyperparameter.json
