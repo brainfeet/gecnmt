@@ -180,17 +180,19 @@
        (map (comp (partial map index)
                   (partial (aid/flip str/split) #" ")))
        (map (fn [tokens bpes]
-              {:input-bpes  (->> bpes
-                                 (s/setval s/BEGINNING [0])
-                                 drop-last)
-               :length      (count bpes)
-               :output-bpes bpes
-               :tokens      (read-string tokens)})
-            random)))
+              {:bpe-length   (count bpes)
+               :input-bpes   (->> bpes
+                                  (s/setval s/BEGINNING [0])
+                                  drop-last)
+               :output-bpes  bpes
+               :tokens       tokens
+               :token-length (count tokens)})
+            (map read-string random))))
 
 (def get-count-filename
-  (comp str
-        :length))
+  (comp (partial str/join ".")
+        (juxt :bpe-length
+              :token-length)))
 
 (defn make-get-filename-content
   [dataset split]
