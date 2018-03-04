@@ -8,11 +8,14 @@
             [cheshire.core :refer :all]
             [com.rpl.specter :as s]
             [me.raynes.fs :as fs]
-            [gecnmt.command :as command]
-            [gecnmt.helpers :as helpers]))
+            [gecnmt.command :as command]))
+
+(def join-paths
+  (comp str
+        io/file))
 
 (def get-dataset-path
-  (partial helpers/join-paths "resources/dataset"))
+  (partial join-paths "resources/dataset"))
 
 (def extract
   (partial command/python
