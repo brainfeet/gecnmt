@@ -250,8 +250,15 @@
     (get-source-targets* dataset "validation")))
 
 (def append-file
-  (comp (partial apply aid/funcall)
-        (partial interleave [command/cat ">>"])))
+  (aid/build appending-spit-parents
+             second
+             (comp slurp
+                   first)))
+
+;This definition is slower and more memory efficient.
+;(def append-file
+;  (comp (partial apply aid/funcall)
+;        (partial interleave [command/cat ">>"])))
 
 (def sort-by-length
   (comp (partial run! append-file)
