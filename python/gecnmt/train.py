@@ -50,13 +50,13 @@ count = len
 def and_(*more):
     if count(more) == 2:
         return first(more) and second(more)
-    return and_(and_(first(more), second(more)), and_(*rest(more)))
+    return and_(first(more), and_(*rest(more)))
 
 
 def equals(*more):
     if count(more) == 2:
         return first(more) == last(more)
-    return and_(equals(first(more), second(more)), equals(*rest(more)))
+    return equals(first(more), equals(*rest(more)))
 
 
 def get_hidden(m):
