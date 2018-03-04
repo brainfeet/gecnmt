@@ -23,7 +23,6 @@ embedding = vocab.GloVe("6B", 50)
 vocabulary_size = first(embedding.vectors.size())
 embedding_vectors = torch.cat(
     (embedding.vectors, init.kaiming_normal(torch.zeros(1, embedding.dim))))
-
 bag_size = 128
 
 
@@ -146,10 +145,10 @@ def get(m, k):
 
 def get_steps(m):
     # TODO implement this function
-    return filter(compose(partial(greater_than, m["max_length"]),
-                          count,
-                          partial(aid.flip(get), "input-bpes")),
-                  map(json.loads, (line_seq(m["file"]))))
+    return partition_by(partial(aid.flip(get), "length"),
+                        filter(compose(partial(greater_than, m["max_length"]),
+                                       partial(aid.flip(get), "length")),
+                               map(json.loads, (line_seq(m["file"])))))
 
 
 def train():
