@@ -71,11 +71,6 @@ def flip(f):
 append_newline = partial(flip(str), "\n")
 
 
-def line_seq(file):
-    for line in file:
-        yield line
-
-
 def dorun(coll):
     for _ in coll:
         pass
