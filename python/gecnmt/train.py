@@ -37,7 +37,7 @@ def get_encoder(m):
 
 
 def multiply(*more):
-    if equals(count(more), 2):
+    if equal(count(more), 2):
         return first(more) * second(more)
     return multiply(first(more), multiply(*rest(more)))
 
@@ -53,16 +53,16 @@ def and_(*more):
     return and_(first(more), and_(*rest(more)))
 
 
-def equals(*more):
+def equal(*more):
     if count(more) == 2:
         return first(more) == last(more)
-    return equals(first(more), equals(*rest(more)))
+    return equal(first(more), equal(*rest(more)))
 
 
 def get_hidden(m):
     return autograd.Variable(init.kaiming_normal(
         torch.zeros(get_bidirectional_size(m["num_layers"]),
-                    if_(equals(m["split"], "training"),
+                    if_(equal(m["split"], "training"),
                         m["batch_size"],
                         1),
                     m["hidden_size"])))
