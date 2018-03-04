@@ -1,3 +1,4 @@
+import functools
 import json
 import os.path as path
 
@@ -87,9 +88,61 @@ def get_sorted_path(m):
                      "sorted.txt")
 
 
-def get_steps(file):
+def reduce(f, *more):
+    if count(more) == 1:
+        functools.reduce(f, last(more))
+    return functools.reduce(f, last(more), first(more))
+
+
+def get_continuation(continuation, element):
+    def continuation_(structure):
+        if isinstance(element, str):
+            return update_in(structure, [element], continuation)
+        if isinstance(element, RichNavigator):
+            return element.transform_(continuation, structure)
+    return continuation_
+
+
+class RichNavigator:
+    def __init__(self, transform_):
+        self.transform_ = transform_
+
+    def transform_(self, *args):
+        return self.transform_(*args)
+
+
+MAP_VALS = RichNavigator(walk_values)
+ALL = RichNavigator(walk)
+
+reverse = reversed
+
+
+def vector(*more):
+    return tuple(more)
+
+
+def coerce_path(path):
+    if isinstance(path, tuple):
+        return path
+    return vector(path)
+
+
+def transform_(path, transform_fn, structure):
+    return reduce(get_continuation, transform_fn, reverse(coerce_path(path)))(
+        structure)
+
+
+def set_val_(path, val, structure):
+    return transform_(path, constantly(val), structure)
+
+
+def greater_than(x, y):
+    return x > y
+
+
+def get_steps(m):
     # TODO implement this function
-    return line_seq(file)
+    return m["file"]
 
 
 def train():
@@ -97,4 +150,4 @@ def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as file:
-        get_steps(file)
+        get_steps(set_val_("file", file, hyperparameter))
