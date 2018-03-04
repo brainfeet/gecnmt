@@ -246,6 +246,10 @@
     (mapcat (partial get-source-targets* dataset) ["training" "validation"])
     (get-source-targets* dataset "validation")))
 
+(def append-file
+  (comp (partial apply aid/funcall)
+        (partial interleave [command/cat ">>"])))
+
 (defn mung
   [dataset & more]
   (aid/mlet [_ (if (= dataset "simple")
