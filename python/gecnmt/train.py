@@ -103,8 +103,8 @@ def get_continuation(continuation, element):
 
 
 class RichNavigator:
-    def __init__(self, transform_):
-        self.transform_ = transform_
+    def __init__(self, transform__):
+        self.transform_ = transform__
 
 
 MAP_VALS = RichNavigator(walk_values)
