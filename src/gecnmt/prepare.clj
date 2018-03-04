@@ -233,12 +233,18 @@
         (comp (partial (aid/flip join-paths) "sorted.txt")
               fs/parent)))
 
-(defn get-source-targets
+(defn get-source-targets*
   [dataset split]
   (map get-source-target
        (sort-by (comp read-string
                       fs/name)
                 (fs/find-files (get-dataset-path dataset split) #"\d+"))))
+
+(defn get-source-targets
+  [dataset]
+  (if (= dataset "simple")
+    (mapcat (partial get-source-targets* dataset) ["training" "validation"])
+    (get-source-targets* dataset "validation")))
 
 (defn mung
   [dataset & more]
