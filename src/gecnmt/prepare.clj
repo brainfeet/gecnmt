@@ -250,6 +250,10 @@
   (comp (partial apply aid/funcall)
         (partial interleave [command/cat ">>"])))
 
+(def sort-by-length
+  (comp (partial run! append-file)
+        get-source-targets))
+
 (defn mung
   [dataset & more]
   (aid/mlet [_ (if (= dataset "simple")
@@ -263,4 +267,5 @@
              _ (learn-bpe dataset)
              _ (apply-bpe dataset)]
             (build-vocabulary dataset)
-            (apply split-dataset dataset more)))
+            (apply split-dataset dataset more)
+            (sort-by-length dataset)))
