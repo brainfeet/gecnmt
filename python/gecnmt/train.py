@@ -1,6 +1,4 @@
-import glob
 import json
-import os.path
 
 from funcy import *
 import torch
@@ -79,7 +77,3 @@ def encode(m):
 
 
 dataset_path = "../resources/dataset"
-
-
-def get_glob(m):
-    return os.path.join(dataset_path, m["dataset"], m["split"], "*")
