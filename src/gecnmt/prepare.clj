@@ -240,7 +240,8 @@
   (->> #"\d+.+"
        (fs/find-files (get-dataset-path dataset split))
        (sort-by (comp read-string
-                      fs/name))
+                      fs/name)
+                >)
        (map get-source-target)))
 
 (defn get-source-targets
