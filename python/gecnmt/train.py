@@ -145,10 +145,13 @@ def get(m, k):
 
 def get_steps(m):
     # TODO implement this function
-    return partition_by(partial(aid.flip(get), "length"),
-                        filter(compose(partial(greater_than, m["max_length"]),
-                                       partial(aid.flip(get), "length")),
-                               map(json.loads, (line_seq(m["file"])))))
+    return map(partial(partition, m["batch_size"]),
+               partition_by(partial(aid.flip(get), "length"),
+                            filter(compose(
+                                partial(greater_than, m["max_length"]),
+                                partial(aid.flip(get), "length")),
+                                map(json.loads,
+                                    (line_seq(m["file"]))))))
 
 
 def train():
