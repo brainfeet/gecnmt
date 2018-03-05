@@ -155,7 +155,6 @@ def lemmatize(token):
 
 
 determiner_ = partial(equal, "DT")
-
 prepositions = {"with",
                 "at",
                 "from",
