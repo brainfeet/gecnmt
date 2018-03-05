@@ -154,10 +154,9 @@ def lemmatize(token):
     return token["text"]
 
 
-# TODO possibly include PDT and WDT
-# TODO possibly include IN
 determiner_ = partial(equal, "DT")
 
+# TODO remove prepositions
 remove_tokens = partial(remove, comp(determiner_,
                                      partial(aid.flip(get),
                                              "tag_")))
