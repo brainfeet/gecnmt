@@ -132,7 +132,7 @@
                                                         (partial str/join " ")))
                                      (partial s/transform* [s/ALL s/ALL] :text)
                                      (partial map read-string))
-                       :input  "split.txt"
+                       :input  "random.txt"
                        :output "text.txt"}))
 
 (defn learn-bpe
