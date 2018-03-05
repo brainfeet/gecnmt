@@ -149,9 +149,27 @@ def partition(n, *more):
 partition_by = comp(partial(map, tuple), funcy.partition_by)
 
 
+def contains_(coll, k):
+    return k in coll
+
+
+inflecteds = {"BES",
+              "HVS",
+              "JJR",
+              "JJS",
+              "NNS",
+              "RBR",
+              "RBS",
+              "VBD",
+              "VBG",
+              "VBN",
+              "VBZ"}
+
+
 def lemmatize(token):
-    # TODO lemmatize token based on tag_
-    return token["text"]
+    return if_(contains_(inflecteds, token["tag_"]),
+               token["lemma_"],
+               token["text"])
 
 
 determiner_ = partial(equal, "DT")
@@ -201,10 +219,6 @@ prepositions = {"with",
                 "off",
                 "above",
                 "near"}
-
-
-def contains_(coll, k):
-    return k in coll
 
 
 def build(f, *more):
