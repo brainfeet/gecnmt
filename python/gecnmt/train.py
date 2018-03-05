@@ -290,7 +290,8 @@ def bag_(s):
     return reduce(increment_vector, tuple(repeat(bag_size, 0)), s)
 
 
-bag = comp(partial(transform_, (FIRST, FIRST), lower_case),
+bag = comp(partial(map, bag_),
+           partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
 
 # TODO implement this function
