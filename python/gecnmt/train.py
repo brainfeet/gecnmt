@@ -149,16 +149,25 @@ def partition(n, *more):
 partition_by = compose(partial(map, tuple), funcy.partition_by)
 
 
+def lemmatize(token):
+    # TODO lemmatize token based on tag_
+    return token["text"]
+
+
+# TODO implement this function
+convert = partial(transform_, "tokens", compose(partial(map, lemmatize)))
+
+
 def get_steps(m):
     # TODO implement this function
     return apply(concat,
                  map(partial(partition, m["batch_size"]),
                      partition_by(partial(aid.flip(get), "bpe-length"),
-                                  filter(compose(
+                                  map(convert, (filter(compose(
                                       partial(greater_than, m["max_length"]),
                                       partial(aid.flip(get), "bpe-length")),
                                       map(json.loads,
-                                          (line_seq(m["file"])))))))
+                                          (line_seq(m["file"])))))))))
 
 
 def train():
