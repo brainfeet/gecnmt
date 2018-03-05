@@ -208,11 +208,26 @@ def contains_(coll, k):
     return k in coll
 
 
+def build(f, *more):
+    return comp(partial(apply, f), apply(juxt, more))
+
+
+def or_(*more):
+    if count(more) == 2:
+        return first(more) or last(more)
+    return or_(first(more), or_(*rest(more)))
+
+
 preposition_ = partial(contains_, prepositions)
 # TODO remove prepositions
-remove_tokens = partial(remove, comp(determiner_,
-                                     partial(aid.flip(get),
-                                             "tag_")))
+
+remove_tokens = partial(remove, build(or_,
+                                      comp(determiner_,
+                                           partial(aid.flip(get),
+                                                   "tag_")),
+                                      comp(preposition_,
+                                           partial(aid.flip(get),
+                                                   "lower_"))))
 
 # TODO implement this function
 # if tuple isn't called, tokens don't persist
