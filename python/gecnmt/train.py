@@ -253,16 +253,8 @@ set_bag = build(partial(set_val_, "bag"),
                      partial(aid.flip(get), "tokens")),
                 identity)
 
-
-def dissoc(map, key):
-    m = map.copy()
-    m.pop(key)
-    return m
-
-
 # TODO implement this function
-convert = comp(partial(aid.flip(dissoc), "tokens"),
-               set_bag,
+convert = comp(set_bag,
                remove_tokens)
 
 
