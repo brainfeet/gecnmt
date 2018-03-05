@@ -344,13 +344,13 @@ def dissoc(map, key):
 
 def get_steps(m):
     # TODO implement this function
-    return map(compose(partial(transform_, MAP_VALS, torch.FloatTensor),
-                       partial(aid.flip(dissoc), "tokens"),
-                       pad_step,
-                       partial(apply, merge_with, vector),
-                       partial(sort_by,
-                               greater_than,
-                               partial(aid.flip(get), "lengths"))),
+    return map(comp(partial(transform_, MAP_VALS, torch.FloatTensor),
+                    partial(aid.flip(dissoc), "tokens"),
+                    pad_step,
+                    partial(apply, merge_with, vector),
+                    partial(sort_by,
+                            greater_than,
+                            partial(aid.flip(get), "lengths"))),
                apply(concat,
                      map(partial(partition, m["batch_size"]),
                          partition_by(partial(aid.flip(get), "length"),
