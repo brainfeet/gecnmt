@@ -154,8 +154,16 @@ def lemmatize(token):
     return token["text"]
 
 
+# TODO possibly include PDT and WDT
+determiner_ = partial(equal, "DT")
+
 # TODO implement this function
-convert = partial(transform_, "tokens", compose(partial(map, lemmatize)))
+convert = partial(transform_,
+                  "tokens",
+                  compose(partial(map, lemmatize),
+                          partial(remove, compose(determiner_,
+                                                  partial(aid.flip(get),
+                                                          "tag_")))))
 
 
 def get_steps(m):
