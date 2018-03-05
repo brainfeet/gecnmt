@@ -14,3 +14,6 @@ def line_seq(file):
 
 def apply(f, *more):
     return f(*butlast(more), *last(more))
+
+
+comp = compose

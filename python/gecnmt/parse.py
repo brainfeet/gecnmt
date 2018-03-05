@@ -25,10 +25,10 @@ def get_token_map(token):
             "text": token.text}
 
 
-parse_stringify = compose(json.dumps,
-                          tuple,
-                          partial(map, get_token_map),
-                          nlp)
+parse_stringify = comp(json.dumps,
+                       tuple,
+                       partial(map, get_token_map),
+                       nlp)
 
 
 def replace(s, match, replacement):
@@ -62,15 +62,15 @@ def dorun(coll):
         pass
 
 
-run_ = compose(dorun, map)
+run_ = comp(dorun, map)
 
 
 def parse():
     with open(get_combined_path()) as f:
-        return run_(compose(partial(appending_spit,
-                                    get_parsed_path(get_combined_path())),
-                            append_newline,
-                            parse_stringify),
+        return run_(comp(partial(appending_spit,
+                                 get_parsed_path(get_combined_path())),
+                         append_newline,
+                         parse_stringify),
                     line_seq(f))
 
 

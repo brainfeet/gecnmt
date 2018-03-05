@@ -146,7 +146,7 @@ def partition(n, *more):
         return funcy.partition(n, n, last(more))
 
 
-partition_by = compose(partial(map, tuple), funcy.partition_by)
+partition_by = comp(partial(map, tuple), funcy.partition_by)
 
 
 def lemmatize(token):
@@ -158,15 +158,15 @@ def lemmatize(token):
 # TODO possibly include IN
 determiner_ = partial(equal, "DT")
 
-remove_tokens = partial(remove, compose(determiner_,
-                                        partial(aid.flip(get),
-                                                "tag_")))
+remove_tokens = partial(remove, comp(determiner_,
+                                     partial(aid.flip(get),
+                                             "tag_")))
 
 # TODO implement this function
 # if tuple isn't called, tokens don't persist
-convert = partial(transform_, "tokens", compose(tuple,
-                                                partial(map, lemmatize),
-                                                remove_tokens))
+convert = partial(transform_, "tokens", comp(tuple,
+                                             partial(map, lemmatize),
+                                             remove_tokens))
 
 
 def sort_by(key_fn, coll):
@@ -175,13 +175,13 @@ def sort_by(key_fn, coll):
 
 def get_steps(m):
     # TODO implement this function
-    return map(partial(sort_by, compose(count,
-                                        partial(aid.flip(get), "tokens"))),
+    return map(partial(sort_by, comp(count,
+                                     partial(aid.flip(get), "tokens"))),
                apply(concat,
                      map(partial(partition, m["batch_size"]),
                          partition_by(partial(aid.flip(get), "length"),
                                       map(convert,
-                                          filter(compose(
+                                          filter(comp(
                                               partial(greater_than,
                                                       m["max_length"]),
                                               partial(aid.flip(get), "length")),
