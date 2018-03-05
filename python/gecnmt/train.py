@@ -268,6 +268,7 @@ def get_steps(m):
     # TODO implement this function
     return map(partial(sort_by,
                        greater_than,
+                       # TODO use lengths
                        comp(count,
                             partial(aid.flip(get), "tokens"))),
                apply(concat,
