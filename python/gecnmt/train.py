@@ -375,6 +375,18 @@ def get_steps(m):
                                                   (line_seq(m["file"])))))))))
 
 
+def make_run_step(m):
+    def run_step(reduction, element):
+        m["encoder"].zero_grad()
+        encode(merge(m, element))
+        return transform_("step_count", inc, reduction)
+    return run_step
+
+
+def load(m):
+    return set_val_("encoder", get_encoder(m), m)
+
+
 def train():
     # TODO reduce steps
     with open(get_sorted_path(merge(hyperparameter,
