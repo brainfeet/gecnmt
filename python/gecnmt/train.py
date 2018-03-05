@@ -269,7 +269,7 @@ def sort_by(comp, key_fn, coll):
 
 def merge_with(f, *more):
     if equal(count(more), 2):
-        return funcy.merge_with(f, *more)
+        return funcy.merge_with(partial(apply, f), *more)
     return merge_with(f, first(more), merge_with(f, *rest(more)))
 
 
