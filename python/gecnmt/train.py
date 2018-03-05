@@ -344,7 +344,8 @@ def dissoc(map, key):
 
 def get_steps(m):
     # TODO implement this function
-    return map(compose(partial(aid.flip(dissoc), "tokens"),
+    return map(compose(partial(transform_, MAP_VALS, torch.FloatTensor),
+                       partial(aid.flip(dissoc), "tokens"),
                        pad_step,
                        partial(apply, merge_with, vector),
                        partial(sort_by,
