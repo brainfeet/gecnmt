@@ -162,10 +162,10 @@ def get_steps(m):
     # TODO implement this function
     return apply(concat,
                  map(partial(partition, m["batch_size"]),
-                     partition_by(partial(aid.flip(get), "bpe-length"),
+                     partition_by(partial(aid.flip(get), "length"),
                                   map(convert, (filter(compose(
                                       partial(greater_than, m["max_length"]),
-                                      partial(aid.flip(get), "bpe-length")),
+                                      partial(aid.flip(get), "length")),
                                       map(json.loads,
                                           (line_seq(m["file"])))))))))
 
