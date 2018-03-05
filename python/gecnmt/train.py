@@ -349,6 +349,7 @@ get_variable = comp(autograd.Variable,
 def get_steps(m):
     # TODO implement this function
     return map(comp(partial(transform_, MAP_VALS, get_variable),
+                    # tokens don't get converted to Tensors
                     partial(aid.flip(dissoc), "tokens"),
                     pad_step,
                     partial(apply, merge_with, vector),
