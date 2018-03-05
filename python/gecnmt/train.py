@@ -219,8 +219,6 @@ def or_(*more):
 
 
 preposition_ = partial(contains_, prepositions)
-# TODO remove prepositions
-
 remove_tokens = partial(remove, build(or_,
                                       comp(determiner_,
                                            partial(aid.flip(get),
