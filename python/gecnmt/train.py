@@ -117,7 +117,7 @@ def update_first(continuation, structure):
 MAP_VALS = RichNavigator(walk_values)
 ALL = RichNavigator(walk)
 FIRST = RichNavigator(update_first)
-nth = aid.flip(nth)
+nth = aid.flip(funcy.nth)
 
 
 def nth_path(n):
