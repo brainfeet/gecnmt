@@ -215,15 +215,17 @@ def or_(*more):
 preposition_ = partial(contains_, prepositions)
 remove_tokens = partial(transform_,
                         "tokens",
-                        partial(remove, build(or_,
-                                              comp(determiner_,
-                                                   partial(
-                                                       aid.flip(get),
-                                                       "tag_")),
-                                              comp(preposition_,
-                                                   partial(
-                                                       aid.flip(get),
-                                                       "lower_")))))
+                        # if tuple isn't called, tokens don't persist
+                        compose(tuple,
+                                partial(remove, build(or_,
+                                                      comp(determiner_,
+                                                           partial(
+                                                               aid.flip(get),
+                                                               "tag_")),
+                                                      comp(preposition_,
+                                                           partial(
+                                                               aid.flip(get),
+                                                               "lower_"))))))
 
 inflecteds = {"BES",
               "HVS",
@@ -247,14 +249,18 @@ def lemmatize(token):
 # TODO extract a function
 # TODO implement this function
 set_bag = build(partial(set_val_, "bag"),
-                # if tuple isn't called, tokens don't persist
-                comp(tuple,
-                     partial(map, lemmatize),
+                comp(partial(map, lemmatize),
                      partial(aid.flip(get), "tokens")),
                 identity)
 
+set_lengths = build(partial(set_val_, "lengths"),
+                    comp(count,
+                         partial(aid.flip(get), "tokens")),
+                    identity)
+
 # TODO implement this function
 convert = comp(set_bag,
+               set_lengths,
                remove_tokens)
 
 
@@ -275,9 +281,7 @@ def get_steps(m):
     return map(compose(partial(apply, merge_with, vector),
                        partial(sort_by,
                                greater_than,
-                               # TODO use lengths
-                               comp(count,
-                                    partial(aid.flip(get), "bag")))),
+                               partial(aid.flip(get), "lengths"))),
                apply(concat,
                      map(partial(partition, m["batch_size"]),
                          partition_by(partial(aid.flip(get), "length"),
