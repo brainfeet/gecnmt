@@ -234,6 +234,7 @@ remove_tokens = partial(transform_,
                         "tokens",
                         # if tuple isn't called, tokens don't persist
                         compose(tuple,
+                                # TODO make remove persistent
                                 partial(remove,
                                         build(or_,
                                               comp(determiner_,
@@ -271,6 +272,22 @@ def make_set(k, f):
 
 def lower_case(s):
     return s.lower()
+
+
+int = ord
+
+
+def increment_vector(reduction, c):
+    return transform_(nth_path(int(c)), inc, reduction)
+
+
+# TODO make repeat persistent
+repeat = aid.flip(funcy.repeat)
+
+
+def bag_(s):
+    # if tuple isn't called, repeat doesn't persist
+    return reduce(increment_vector, tuple(repeat(bag_size, 0)), s)
 
 
 bag = comp(partial(transform_, (FIRST, FIRST), lower_case),
