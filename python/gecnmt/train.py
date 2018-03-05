@@ -122,9 +122,9 @@ nth = aid.flip(funcy.nth)
 
 def nth_path(n):
     def update_nth(continuation, structure):
-        return (*take(dec(n), structure),
+        return (*take(n, structure),
                 continuation(nth(structure, n)),
-                *drop(n, structure))
+                *drop(inc(n), structure))
     return RichNavigator(update_nth)
 
 
