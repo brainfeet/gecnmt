@@ -153,25 +153,6 @@ def contains_(coll, k):
     return k in coll
 
 
-inflecteds = {"BES",
-              "HVS",
-              "JJR",
-              "JJS",
-              "NNS",
-              "RBR",
-              "RBS",
-              "VBD",
-              "VBG",
-              "VBN",
-              "VBZ"}
-
-
-def lemmatize(token):
-    return if_(contains_(inflecteds, token["tag_"]),
-               token["lemma_"],
-               token["text"])
-
-
 determiner_ = partial(equal, "DT")
 prepositions = {"with",
                 "at",
@@ -246,8 +227,35 @@ remove_tokens = partial(transform_,
                                                             aid.flip(get),
                                                             "lower_"))))))
 
+inflecteds = {"BES",
+              "HVS",
+              "JJR",
+              "JJS",
+              "NNS",
+              "RBR",
+              "RBS",
+              "VBD",
+              "VBG",
+              "VBN",
+              "VBZ"}
+
+
+def lemmatize(token):
+    return if_(contains_(inflecteds, token["tag_"]),
+               token["lemma_"],
+               token["text"])
+
+
+# TODO extract a function
 # TODO implement this function
-convert = comp(remove_tokens)
+set_bag = build(partial(set_val_, "bag"),
+                comp(partial(map, lemmatize),
+                     partial(aid.flip(get), "tokens")),
+                identity)
+
+# TODO implement this function
+convert = comp(set_bag,
+               remove_tokens)
 
 
 def sort_by(comp, key_fn, coll):
