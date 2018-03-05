@@ -2,6 +2,7 @@ import functools
 import json
 import os.path as path
 
+import funcy
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
@@ -138,6 +139,14 @@ def greater_than(x, y):
 
 def get(m, k):
     return m[k]
+
+
+def partition(n, *more):
+    if count(more) == 1:
+        return funcy.partition(n, n, last(more))
+
+
+partition_by = compose(partial(map, tuple), funcy.partition_by)
 
 
 def get_steps(m):
