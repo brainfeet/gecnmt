@@ -163,10 +163,8 @@ remove_tokens = partial(remove, compose(determiner_,
                                                 "tag_")))
 
 # TODO implement this function
-convert = partial(transform_,
-                  "tokens",
-                  compose(partial(map, lemmatize),
-                          remove_tokens))
+convert = partial(transform_, "tokens", compose(partial(map, lemmatize),
+                                                remove_tokens))
 
 
 def get_steps(m):
