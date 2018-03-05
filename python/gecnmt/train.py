@@ -306,8 +306,8 @@ convert = comp(apply(comp,
                remove_tokens)
 
 
-def sort_by(comp, key_fn, coll):
-    return sorted(coll, key=key_fn, reverse=if_(equal(comp, greater_than),
+def sort_by(comp_, key_fn, coll):
+    return sorted(coll, key=key_fn, reverse=if_(equal(comp_, greater_than),
                                                 True,
                                                 False))
 
