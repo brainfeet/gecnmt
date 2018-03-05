@@ -336,9 +336,16 @@ def pad_step(m):
     return transform_(("bag", ALL), make_pad(first(m["lengths"]), zero_bag), m)
 
 
+def dissoc(map, key):
+    m = map.copy()
+    m.pop(key)
+    return m
+
+
 def get_steps(m):
     # TODO implement this function
-    return map(compose(pad_step,
+    return map(compose(partial(aid.flip(dissoc), "tokens"),
+                       pad_step,
                        partial(apply, merge_with, vector),
                        partial(sort_by,
                                greater_than,
