@@ -257,6 +257,10 @@ def make_set(k, f):
                  identity)
 
 
+def lower_case(s):
+    return s.lower()
+
+
 # TODO implement this function
 convert = comp(apply(comp,
                      map(partial(apply, make_set),
