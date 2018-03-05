@@ -163,7 +163,9 @@ remove_tokens = partial(remove, compose(determiner_,
                                                 "tag_")))
 
 # TODO implement this function
-convert = partial(transform_, "tokens", compose(partial(map, lemmatize),
+# if tuple isn't called, tokens don't persist
+convert = partial(transform_, "tokens", compose(tuple,
+                                                partial(map, lemmatize),
                                                 remove_tokens))
 
 
@@ -173,14 +175,18 @@ def sort_by(key_fn, coll):
 
 def get_steps(m):
     # TODO implement this function
-    return apply(concat,
-                 map(partial(partition, m["batch_size"]),
-                     partition_by(partial(aid.flip(get), "length"),
-                                  map(convert, (filter(compose(
-                                      partial(greater_than, m["max_length"]),
-                                      partial(aid.flip(get), "length")),
-                                      map(json.loads,
-                                          (line_seq(m["file"])))))))))
+    return map(partial(sort_by, compose(count,
+                                        partial(aid.flip(get), "tokens"))),
+               apply(concat,
+                     map(partial(partition, m["batch_size"]),
+                         partition_by(partial(aid.flip(get), "length"),
+                                      map(convert,
+                                          filter(compose(
+                                              partial(greater_than,
+                                                      m["max_length"]),
+                                              partial(aid.flip(get), "length")),
+                                              map(json.loads,
+                                                  (line_seq(m["file"])))))))))
 
 
 def train():
