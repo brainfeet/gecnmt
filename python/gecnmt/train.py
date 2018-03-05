@@ -114,9 +114,14 @@ def update_first(continuation, structure):
     return (continuation(first(structure)), *rest(structure))
 
 
+def append(continuation, structure):
+    return (*structure, *continuation(()))
+
+
 MAP_VALS = RichNavigator(walk_values)
 ALL = RichNavigator(walk)
 FIRST = RichNavigator(update_first)
+END = RichNavigator(append)
 nth = aid.flip(funcy.nth)
 
 
