@@ -1,3 +1,4 @@
+import copy
 import functools
 import json
 import os.path as path
@@ -262,6 +263,12 @@ def sort_by(comp, key_fn, coll):
     return sorted(coll, key=key_fn, reverse=if_(equal(comp, greater_than),
                                                 True,
                                                 False))
+
+
+def dissoc(map, key):
+    m = map.copy()
+    m.pop(key)
+    return m
 
 
 def get_steps(m):
