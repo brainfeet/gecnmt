@@ -353,7 +353,7 @@ def batch_transpose(input):
 
 get_variable = comp(batch_transpose,
                     autograd.Variable,
-                    torch.LongTensor)
+                    torch.FloatTensor)
 
 
 def get_steps(m):
@@ -391,7 +391,8 @@ def make_run_step(m):
 
 def load(m):
     # TODO implement this function
-    return set_val_("encoder", get_encoder(m), m)
+    return merge(m, {"encoder": get_encoder(m),
+                     "step_count": 0})
 
 
 def train():
@@ -399,4 +400,7 @@ def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as file:
-        get_steps(set_val_("file", file, hyperparameter))
+        build(reduce,
+              make_run_step,
+              identity,
+              get_steps)(set_val_("file", file, load(hyperparameter)))
