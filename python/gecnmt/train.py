@@ -232,19 +232,22 @@ def or_(*more):
 
 
 preposition_ = partial(contains_, prepositions)
-remove_tokens = partial(remove, build(or_,
-                                      comp(determiner_,
-                                           partial(aid.flip(get),
-                                                   "tag_")),
-                                      comp(preposition_,
-                                           partial(aid.flip(get),
-                                                   "lower_"))))
+remove_tokens = partial(transform_,
+                        "tokens",
+                        # if tuple isn't called, tokens don't persist
+                        comp(tuple,
+                             partial(remove, build(or_,
+                                                   comp(determiner_,
+                                                        partial(
+                                                            aid.flip(get),
+                                                            "tag_")),
+                                                   comp(preposition_,
+                                                        partial(
+                                                            aid.flip(get),
+                                                            "lower_"))))))
 
 # TODO implement this function
-# if tuple isn't called, tokens don't persist
-convert = partial(transform_, "tokens", comp(tuple,
-                                             partial(map, lemmatize),
-                                             remove_tokens))
+convert = comp(remove_tokens)
 
 
 def sort_by(comp, key_fn, coll):
