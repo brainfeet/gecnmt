@@ -290,8 +290,11 @@ def increment_vector(reduction, c):
 repeat = aid.flip(funcy.repeat)
 
 # if tuple isn't called, repeat doesn't persist
-bag_ = partial(reduce, increment_vector, tuple(repeat(bag_size, 0)))
-bag = comp(partial(map, bag_),
+zero_bag = tuple(repeat(bag_size, 0))
+bag_ = partial(reduce, increment_vector, zero_bag)
+# if tuple isn't called, map doesn't persist
+bag = comp(tuple,
+           partial(map, bag_),
            partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
 
@@ -315,9 +318,28 @@ def merge_with(f, *more):
     return merge_with(f, first(more), merge_with(f, *rest(more)))
 
 
+def subtract(*more):
+    if equal(count(more), 2):
+        return first(more) - last(more)
+    return subtract(first(more), subtract(*rest(more)))
+
+
+def make_pad(n, placeholder):
+    def pad(coll):
+        return set_val_(END,
+                        repeat(subtract(n, count(coll)), placeholder),
+                        coll)
+    return pad
+
+
+def pad_step(m):
+    return transform_(("bag", ALL), make_pad(first(m["lengths"]), zero_bag), m)
+
+
 def get_steps(m):
     # TODO implement this function
-    return map(compose(partial(apply, merge_with, vector),
+    return map(compose(pad_step,
+                       partial(apply, merge_with, vector),
                        partial(sort_by,
                                greater_than,
                                partial(aid.flip(get), "lengths"))),
