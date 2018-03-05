@@ -284,12 +284,8 @@ def increment_vector(reduction, c):
 # TODO make repeat persistent
 repeat = aid.flip(funcy.repeat)
 
-
-def bag_(s):
-    # if tuple isn't called, repeat doesn't persist
-    return reduce(increment_vector, tuple(repeat(bag_size, 0)), s)
-
-
+# if tuple isn't called, repeat doesn't persist
+bag_ = partial(reduce, increment_vector, tuple(repeat(bag_size, 0)))
 bag = comp(partial(map, bag_),
            partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
