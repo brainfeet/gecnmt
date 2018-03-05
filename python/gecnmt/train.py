@@ -347,7 +347,12 @@ def pad_step(m):
     return transform_(("bag", ALL), make_pad(first(m["lengths"]), zero_bag), m)
 
 
-get_variable = comp(autograd.Variable,
+def batch_transpose(input):
+    return torch.transpose(input, 0, 1)
+
+
+get_variable = comp(batch_transpose,
+                    autograd.Variable,
                     torch.LongTensor)
 
 
@@ -379,7 +384,7 @@ def make_run_step(m):
     # TODO implement this function
     def run_step(reduction, element):
         m["encoder"].zero_grad()
-        encode(merge(m, element))
+        encode(merge(m, element, {"split": "training"}))
         return transform_("step_count", inc, reduction)
     return run_step
 
