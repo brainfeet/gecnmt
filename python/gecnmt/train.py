@@ -1,4 +1,3 @@
-import builtins
 import functools
 import json
 import os.path as path
@@ -224,15 +223,14 @@ remove_tokens = partial(transform_,
                         "tokens",
                         # if tuple isn't called, tokens don't persist
                         compose(tuple,
-                                partial(remove, build(or_,
-                                                      comp(determiner_,
-                                                           partial(
-                                                               aid.flip(get),
-                                                               "tag_")),
-                                                      comp(preposition_,
-                                                           partial(
-                                                               aid.flip(get),
-                                                               "lower_"))))))
+                                partial(remove,
+                                        build(or_,
+                                              comp(determiner_,
+                                                   partial(aid.flip(get),
+                                                           "tag_")),
+                                              comp(preposition_,
+                                                   partial(aid.flip(get),
+                                                           "lower_"))))))
 
 inflecteds = {"BES",
               "HVS",
