@@ -169,14 +169,18 @@ convert = partial(transform_, "tokens", comp(tuple,
                                              remove_tokens))
 
 
-def sort_by(key_fn, coll):
-    return sorted(coll, key=key_fn)
+def sort_by(comp, key_fn, coll):
+    return sorted(coll, key=key_fn, reverse=if_(equal(comp, greater_than),
+                                                True,
+                                                False))
 
 
 def get_steps(m):
     # TODO implement this function
-    return map(partial(sort_by, comp(count,
-                                     partial(aid.flip(get), "tokens"))),
+    return map(partial(sort_by,
+                       greater_than,
+                       comp(count,
+                            partial(aid.flip(get), "tokens"))),
                apply(concat,
                      map(partial(partition, m["batch_size"]),
                          partition_by(partial(aid.flip(get), "length"),
