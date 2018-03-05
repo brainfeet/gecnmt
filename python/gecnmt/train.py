@@ -376,6 +376,7 @@ def get_steps(m):
 
 
 def make_run_step(m):
+    # TODO implement this function
     def run_step(reduction, element):
         m["encoder"].zero_grad()
         encode(merge(m, element))
@@ -384,6 +385,7 @@ def make_run_step(m):
 
 
 def load(m):
+    # TODO implement this function
     return set_val_("encoder", get_encoder(m), m)
 
 
