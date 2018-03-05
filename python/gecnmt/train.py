@@ -117,6 +117,17 @@ def update_first(continuation, structure):
 MAP_VALS = RichNavigator(walk_values)
 ALL = RichNavigator(walk)
 FIRST = RichNavigator(update_first)
+nth = aid.flip(nth)
+
+
+def nth_path(n):
+    def update_nth(continuation, structure):
+        return (*take(dec(n), structure),
+                continuation(nth(structure, n)),
+                *drop(n, structure))
+    return RichNavigator(update_nth)
+
+
 reverse = reversed
 
 
