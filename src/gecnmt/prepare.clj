@@ -79,6 +79,7 @@
 (def parse-keywordize
   (partial (aid/flip parse-string) true))
 
+;TODO rename this function as ascii?
 (def is-ascii?
   (partial every? (comp (partial > 128)
                         int)))
