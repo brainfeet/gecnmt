@@ -215,17 +215,15 @@ def or_(*more):
 preposition_ = partial(contains_, prepositions)
 remove_tokens = partial(transform_,
                         "tokens",
-                        # if tuple isn't called, tokens don't persist
-                        comp(tuple,
-                             partial(remove, build(or_,
-                                                   comp(determiner_,
-                                                        partial(
-                                                            aid.flip(get),
-                                                            "tag_")),
-                                                   comp(preposition_,
-                                                        partial(
-                                                            aid.flip(get),
-                                                            "lower_"))))))
+                        partial(remove, build(or_,
+                                              comp(determiner_,
+                                                   partial(
+                                                       aid.flip(get),
+                                                       "tag_")),
+                                              comp(preposition_,
+                                                   partial(
+                                                       aid.flip(get),
+                                                       "lower_")))))
 
 inflecteds = {"BES",
               "HVS",
@@ -249,12 +247,22 @@ def lemmatize(token):
 # TODO extract a function
 # TODO implement this function
 set_bag = build(partial(set_val_, "bag"),
-                comp(partial(map, lemmatize),
+                # if tuple isn't called, tokens don't persist
+                comp(tuple,
+                     partial(map, lemmatize),
                      partial(aid.flip(get), "tokens")),
                 identity)
 
+
+def dissoc(map, key):
+    m = map.copy()
+    m.pop(key)
+    return m
+
+
 # TODO implement this function
-convert = comp(set_bag,
+convert = comp(partial(aid.flip(dissoc), "tokens"),
+               set_bag,
                remove_tokens)
 
 
@@ -264,19 +272,13 @@ def sort_by(comp, key_fn, coll):
                                                 False))
 
 
-def dissoc(map, key):
-    m = map.copy()
-    m.pop(key)
-    return m
-
-
 def get_steps(m):
     # TODO implement this function
     return map(partial(sort_by,
                        greater_than,
                        # TODO use lengths
                        comp(count,
-                            partial(aid.flip(get), "tokens"))),
+                            partial(aid.flip(get), "bag"))),
                apply(concat,
                      map(partial(partition, m["batch_size"]),
                          partition_by(partial(aid.flip(get), "length"),
