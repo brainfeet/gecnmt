@@ -343,7 +343,7 @@ def dissoc(map, key):
 
 
 get_variable = comp(autograd.Variable,
-                    torch.FloatTensor)
+                    torch.LongTensor)
 
 
 def get_steps(m):
