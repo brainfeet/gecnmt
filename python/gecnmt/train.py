@@ -254,9 +254,10 @@ def make_set(k, f):
 
 
 # TODO implement this function
-# TODO map make_set
-convert = comp(make_set("bag", partial(map, lemmatize)),
-               make_set("lengths", count),
+convert = comp(apply(comp,
+                     map(partial(apply, make_set),
+                         (("bag", partial(map, lemmatize)),
+                          ("lengths", count)))),
                remove_tokens)
 
 
