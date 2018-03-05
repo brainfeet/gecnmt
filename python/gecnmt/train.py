@@ -342,9 +342,13 @@ def dissoc(map, key):
     return m
 
 
+get_variable = comp(autograd.Variable,
+                    torch.FloatTensor)
+
+
 def get_steps(m):
     # TODO implement this function
-    return map(comp(partial(transform_, MAP_VALS, torch.FloatTensor),
+    return map(comp(partial(transform_, MAP_VALS, get_variable),
                     partial(aid.flip(dissoc), "tokens"),
                     pad_step,
                     partial(apply, merge_with, vector),
