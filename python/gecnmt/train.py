@@ -108,9 +108,13 @@ class RichNavigator:
         self.transform_ = transform__
 
 
+def update_first(continuation, structure):
+    return (continuation(first(structure)), *rest(structure))
+
+
 MAP_VALS = RichNavigator(walk_values)
 ALL = RichNavigator(walk)
-
+FIRST = RichNavigator(update_first)
 reverse = reversed
 
 
