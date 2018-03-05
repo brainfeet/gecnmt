@@ -167,6 +167,10 @@ convert = partial(transform_, "tokens", compose(partial(map, lemmatize),
                                                 remove_tokens))
 
 
+def sort_by(key_fn, coll):
+    return sorted(coll, key=key_fn)
+
+
 def get_steps(m):
     # TODO implement this function
     return apply(concat,
