@@ -265,7 +265,10 @@ def lower_case(s):
 # TODO implement this function
 convert = comp(apply(comp,
                      map(partial(apply, make_set),
-                         (("bag", partial(map, lemmatize)),
+                         (("bag", comp(partial(transform_,
+                                               (FIRST, FIRST),
+                                               lower_case),
+                                       partial(map, lemmatize))),
                           ("lengths", count)))),
                remove_tokens)
 
