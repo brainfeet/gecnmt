@@ -246,21 +246,17 @@ def lemmatize(token):
                token["text"])
 
 
-# TODO extract a function
-# TODO implement this function
-set_bag = build(partial(set_val_, "bag"),
-                comp(partial(map, lemmatize),
-                     partial(aid.flip(get), "tokens")),
-                identity)
+def make_set(k, f):
+    return build(partial(set_val_, k),
+                 comp(f,
+                      partial(aid.flip(get), "tokens")),
+                 identity)
 
-set_lengths = build(partial(set_val_, "lengths"),
-                    comp(count,
-                         partial(aid.flip(get), "tokens")),
-                    identity)
 
 # TODO implement this function
-convert = comp(set_bag,
-               set_lengths,
+# TODO map make_set
+convert = comp(make_set("bag", partial(map, lemmatize)),
+               make_set("lengths", count),
                remove_tokens)
 
 
