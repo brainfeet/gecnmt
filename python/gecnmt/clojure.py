@@ -1,3 +1,5 @@
+import builtins
+
 from funcy import *
 
 
@@ -17,3 +19,7 @@ def apply(f, *more):
 
 
 comp = compose
+
+
+def str(*more):
+    return str_join("", walk(builtins.str, more))

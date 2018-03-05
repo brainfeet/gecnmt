@@ -1,5 +1,4 @@
 import argparse
-import builtins
 import json
 import re
 
@@ -48,10 +47,6 @@ def spit(f, content, append=False):
 
 def appending_spit(f, content):
     spit(f, content, append=True)
-
-
-def str(*more):
-    return str_join("", walk(builtins.str, more))
 
 
 append_newline = partial(aid.flip(str), "\n")

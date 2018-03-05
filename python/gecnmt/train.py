@@ -1,3 +1,4 @@
+import builtins
 import functools
 import json
 import os.path as path
@@ -96,7 +97,7 @@ def reduce(f, *more):
 
 def get_continuation(continuation, element):
     def continuation_(structure):
-        if isinstance(element, str):
+        if isinstance(element, builtins.str):
             return update_in(structure, [element], continuation)
         if isinstance(element, RichNavigator):
             return element.transform_(continuation, structure)
@@ -109,6 +110,8 @@ class RichNavigator:
 
 
 def update_first(continuation, structure):
+    if isinstance(structure, builtins.str):
+        return str(continuation(first(structure)), *rest(structure))
     return (continuation(first(structure)), *rest(structure))
 
 
