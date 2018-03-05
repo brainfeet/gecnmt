@@ -155,15 +155,18 @@ def lemmatize(token):
 
 
 # TODO possibly include PDT and WDT
+# TODO possibly include IN
 determiner_ = partial(equal, "DT")
+
+remove_tokens = partial(remove, compose(determiner_,
+                                        partial(aid.flip(get),
+                                                "tag_")))
 
 # TODO implement this function
 convert = partial(transform_,
                   "tokens",
                   compose(partial(map, lemmatize),
-                          partial(remove, compose(determiner_,
-                                                  partial(aid.flip(get),
-                                                          "tag_")))))
+                          remove_tokens))
 
 
 def get_steps(m):
