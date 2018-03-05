@@ -156,6 +156,59 @@ def lemmatize(token):
 
 determiner_ = partial(equal, "DT")
 
+prepositions = {"with",
+                "at",
+                "from",
+                "into",
+                "during",
+                "including",
+                "until",
+                "against",
+                "among",
+                "throughout",
+                "despite",
+                "towards",
+                "upon",
+                "concerning",
+                "of",
+                "to",
+                "in",
+                "for",
+                "on",
+                "by",
+                "about",
+                "like",
+                "through",
+                "over",
+                "before",
+                "between",
+                "after",
+                "since",
+                "without",
+                "under",
+                "within",
+                "along",
+                "following",
+                "across",
+                "behind",
+                "beyond",
+                "plus",
+                "except",
+                "but",
+                "up",
+                "out",
+                "around",
+                "down",
+                "off",
+                "above",
+                "near"}
+
+
+def contains_(coll, k):
+    return k in coll
+
+
+preposition_ = partial(contains_, prepositions)
 # TODO remove prepositions
 remove_tokens = partial(remove, comp(determiner_,
                                      partial(aid.flip(get),
