@@ -280,11 +280,12 @@ def merge_with(f, *more):
 
 def get_steps(m):
     # TODO implement this function
-    return map(partial(sort_by,
-                       greater_than,
-                       # TODO use lengths
-                       comp(count,
-                            partial(aid.flip(get), "bag"))),
+    return map(compose(partial(apply, merge_with, vector),
+                       partial(sort_by,
+                               greater_than,
+                               # TODO use lengths
+                               comp(count,
+                                    partial(aid.flip(get), "bag")))),
                apply(concat,
                      map(partial(partition, m["batch_size"]),
                          partition_by(partial(aid.flip(get), "length"),
