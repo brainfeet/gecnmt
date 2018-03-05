@@ -272,6 +272,12 @@ def sort_by(comp, key_fn, coll):
                                                 False))
 
 
+def merge_with(f, *more):
+    if equal(count(more), 2):
+        return funcy.merge_with(f, *more)
+    return merge_with(f, first(more), merge_with(f, *rest(more)))
+
+
 def get_steps(m):
     # TODO implement this function
     return map(partial(sort_by,
