@@ -133,6 +133,17 @@ def nth_path(n):
     return RichNavigator(update_nth)
 
 
+def multi_path(*paths):
+    def continuation_(continuation, structure):
+        return reduce(get_continuation, continuation,
+                      coerce_path(first(paths)))(
+            reduce(get_continuation, continuation, coerce_path(second(paths)))(
+                structure))
+    if count(paths) == 2:
+        return RichNavigator(continuation_)
+    return reduce(multi_path, RichNavigator(continuation_), drop(2, paths))
+
+
 reverse = reversed
 
 
@@ -336,21 +347,17 @@ def pad_step(m):
     return transform_(("bag", ALL), make_pad(first(m["lengths"]), zero_bag), m)
 
 
-def dissoc(map, key):
-    m = map.copy()
-    m.pop(key)
-    return m
-
-
 get_variable = comp(autograd.Variable,
                     torch.LongTensor)
 
 
 def get_steps(m):
     # TODO implement this function
-    return map(comp(partial(transform_, MAP_VALS, get_variable),
-                    # tokens don't get converted to Tensors
-                    partial(aid.flip(dissoc), "tokens"),
+    return map(comp(partial(transform_,
+                            multi_path("bag",
+                                       "input-bpes",
+                                       "output-bpes"),
+                            get_variable),
                     pad_step,
                     partial(apply, merge_with, vector),
                     partial(sort_by,
