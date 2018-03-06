@@ -458,9 +458,16 @@ def make_run_step(m):
     return run_step
 
 
+def initialize(m):
+    m["model"].encoder_linear.weight = nn.Parameter(
+        init.kaiming_normal(
+            torch.zeros(dim, get_bidirectional_size(m["hidden_size"]))))
+    return m["model"]
+
+
 def load(m):
     # TODO implement this function
-    return merge(m, {"model": get_model(m),
+    return merge(m, {"model": initialize(set_val_("model", get_model(m), m)),
                      "step_count": 0})
 
 
