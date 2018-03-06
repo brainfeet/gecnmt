@@ -368,18 +368,27 @@ def batch_transpose(input):
 
 
 get_variable = comp(batch_transpose,
-                    autograd.Variable,
-                    torch.FloatTensor)
+                    autograd.Variable)
+embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
+embedding.weight = nn.Parameter(embedding_vectors)
+embedding.weight.requires_grad = False
 
 
 def get_steps(m):
     # TODO implement this function
-    return map(comp(partial(transform_,
+    return map(comp(partial(transform_, "embedding", embedding),
+                    partial(transform_,
                             multi_path("bag",
                                        "embedding",
                                        "input-bpes",
                                        "output-bpes"),
                             get_variable),
+                    partial(transform_, "bag", torch.FloatTensor),
+                    partial(transform_,
+                            multi_path("embedding",
+                                       "input-bpes",
+                                       "output-bpes"),
+                            torch.LongTensor),
                     pad_step,
                     partial(apply, merge_with, vector),
                     partial(sort_by,
