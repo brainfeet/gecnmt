@@ -25,6 +25,9 @@ glove = vocab.GloVe("6B", dim)
 vocabulary_size = first(glove.vectors.size())
 embedding_vectors = torch.cat((glove.vectors, torch.zeros(1, glove.dim)))
 bag_size = 128
+dataset_path = "../resources/dataset"
+bpe_path = path.join(dataset_path, "simple/bpe.json")
+bpe = json.loads(slurp(bpe_path))
 
 
 def get_model(m):
@@ -89,9 +92,6 @@ def encode(m):
                                            2),
             "linear_embedding": linear_embedding,
             "hidden": last(outputs)}
-
-
-dataset_path = "../resources/dataset"
 
 
 def get_sorted_path(m):

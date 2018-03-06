@@ -170,7 +170,7 @@
                         {(+ 2 index) word}))
          (apply merge {0 "<SOS>"
                        1 "<EOS>"})
-         ((juxt (comp (partial spit (get-dataset-path dataset "word.json"))
+         ((juxt (comp (partial spit (get-dataset-path dataset "bpe.json"))
                       generate-string)
                 (comp (partial spit (get-dataset-path dataset "index.edn"))
                       set/map-invert))))))
