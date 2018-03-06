@@ -314,11 +314,10 @@ get_embedding = comp(tuple,
                      partial(map, comp(get_index,
                                        partial(aid.flip(get), "lower_"))))
 # TODO implement this function
-convert = comp(apply(comp,
-                     map(partial(apply, make_set),
-                         (("bag", bag),
-                          ("lengths", count),
-                          ("embedding", get_embedding)))),
+convert = comp(apply(comp, map(partial(apply, make_set),
+                               (("bag", bag),
+                                ("lengths", count),
+                                ("embedding", get_embedding)))),
                remove_tokens)
 
 
