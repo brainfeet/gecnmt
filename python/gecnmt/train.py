@@ -77,10 +77,12 @@ def get_hidden(m):
 
 def encode(m):
     outputs = m["model"].encoder_gru(rnn.pack_padded_sequence(m["bag"],
-                                                             m["lengths"]),
-                                    get_hidden(m))
+                                                              m["lengths"]),
+                                     get_hidden(m))
     # TODO concatenate embeddings
-    return {"encoder_embedding": rnn.pad_packed_sequence(first(outputs)),
+    gru_embedding = first(rnn.pad_packed_sequence(first(outputs)))
+    linear_embedding = m["model"].encoder_linear(gru_embedding)
+    return {"linear_embedding": linear_embedding,
             "hidden": last(outputs)}
 
 
