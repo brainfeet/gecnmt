@@ -406,12 +406,29 @@ def batch_transpose(input):
     return torch.transpose(input, 0, 1)
 
 
+def get_input_output(input_output):
+    input, output = input_output
+    return {"input": input,
+            "output": output}
+
+
+def pair(m):
+    return set_val_("bpes",
+                    map(comp(get_input_output,
+                             partial(map, tuple),
+                             vector),
+                        m["input-bpes"],
+                        m["output-bpes"]),
+                    m)
+
+
 get_variable = comp(batch_transpose,
                     autograd.Variable)
 embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
-convert_to_variables = comp(partial(transform_,
+convert_to_variables = comp(pair,
+                            partial(transform_,
                                     "pretrained_embedding",
                                     embedding),
                             partial(transform_,
@@ -459,12 +476,30 @@ def get_encoder_loss(m):
                    m["pretrained_embedding"])
 
 
+def pad_embedding(m):
+    if equal(first(m["encoder_embedding"].size()), m["max_length"]):
+        return m["encoder_embedding"]
+    return torch.cat(
+        (m["encoder_embedding"],
+         autograd.Variable(
+             torch.zeros(*transform_(FIRST,
+                                     partial(subtract,
+                                             m["max_length"]),
+                                     m["encoder_embedding"].size())))))
+
+
+def decode_tokens(m):
+    # TODO implement this function
+    return pad_embedding(m)
+
+
 def make_run_step(m):
     # TODO implement this function
     def run_step(reduction, element):
         m["model"].zero_grad()
         encoder_output = encode(merge(m, element, {"split": "training"}))
         get_encoder_loss(merge(element, encoder_output))
+        decode_tokens(merge(m, element, encoder_output))
         return transform_("step_count", inc, reduction)
     return run_step
 
@@ -473,6 +508,7 @@ def initialize(m):
     m["model"].encoder_linear.weight = nn.Parameter(
         init.kaiming_normal(
             torch.zeros(dim, get_bidirectional_size(m["hidden_size"]))))
+    # TODO initialize the decoder
     return m["model"]
 
 
