@@ -28,6 +28,8 @@ bag_size = 128
 dataset_path = "../resources/dataset"
 bpe_path = path.join(dataset_path, "simple/bpe.json")
 bpe = json.loads(slurp(bpe_path))
+count = len
+bpe_size = count(bpe)
 
 
 def get_model(m):
@@ -45,11 +47,8 @@ def get_model(m):
         get_bidirectional_size(m["hidden_size"]),
         m["hidden_size"])
     model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
-    # TODO set out
+    model.out = nn.Linear(m["hidden_size"], bpe_size)
     return model
-
-
-count = len
 
 
 def and_(*more):
