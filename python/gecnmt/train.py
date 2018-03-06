@@ -75,7 +75,7 @@ def encode(m):
     output = m["encoder"].gru(rnn.pack_padded_sequence(m["bag"],
                                                        m["lengths"]),
                               get_hidden(m))
-    return {"embedding": rnn.pad_packed_sequence(first(output)),
+    return {"encoder_embedding": rnn.pad_packed_sequence(first(output)),
             "hidden": last(output)}
 
 
@@ -311,16 +311,18 @@ bag = comp(tuple,
            partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
 get_index = partial(aid.flip(glove.stoi.get), vocabulary_size)
-get_embedding_vector = comp(tuple,
-                            partial(map, comp(get_index,
-                                              partial(aid.flip(get),
-                                                      "lower_"))))
+get_pretrained_embedding = comp(tuple,
+                                partial(map, comp(get_index,
+                                                  partial(aid.flip(get),
+                                                          "lower_"))))
 # TODO implement this function
-convert_from_tokens = comp(apply(comp, map(make_set,
-                                           {"bag": bag,
-                                            "lengths": count,
-                                            "embedding": get_embedding_vector})),
-                           remove_tokens)
+convert_from_tokens = comp(
+    apply(comp,
+          map(make_set,
+              {"bag": bag,
+               "lengths": count,
+               "pretrained_embedding": get_pretrained_embedding})),
+    remove_tokens)
 
 
 def sort_by(comp_, key_fn, coll):
@@ -360,7 +362,7 @@ def make_pad_all(x):
 
 pad_step = apply(comp,
                  map(make_pad_all, {"bag": zero_bag,
-                                    "embedding": 0}))
+                                    "pretrained_embedding": 0}))
 
 
 def batch_transpose(input):
@@ -372,16 +374,18 @@ get_variable = comp(batch_transpose,
 embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
-convert_to_variables = comp(partial(transform_, "embedding", embedding),
+convert_to_variables = comp(partial(transform_,
+                                    "pretrained_embedding",
+                                    embedding),
                             partial(transform_,
                                     multi_path("bag",
-                                               "embedding",
+                                               "pretrained_embedding",
                                                "input-bpes",
                                                "output-bpes"),
                                     get_variable),
                             partial(transform_, "bag", torch.FloatTensor),
                             partial(transform_,
-                                    multi_path("embedding",
+                                    multi_path("pretrained_embedding",
                                                "input-bpes",
                                                "output-bpes"),
                                     torch.LongTensor),
@@ -406,7 +410,9 @@ def get_steps(m):
                                               map(json.loads,
                                                   (line_seq(m["file"])))))))))
 
+
 get_mse = nn.MSELoss()
+
 
 def make_run_step(m):
     # TODO implement this function
