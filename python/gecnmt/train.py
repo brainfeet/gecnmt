@@ -23,9 +23,7 @@ hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
 dim = 50
 glove = vocab.GloVe("6B", dim)
 vocabulary_size = first(glove.vectors.size())
-embedding_vectors = torch.cat(
-    # TODO initialize <UNK> with zeros
-    (glove.vectors, init.kaiming_normal(torch.zeros(1, glove.dim))))
+embedding_vectors = torch.cat((glove.vectors, torch.zeros(1, glove.dim)))
 bag_size = 128
 
 
