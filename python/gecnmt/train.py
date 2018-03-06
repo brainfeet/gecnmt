@@ -494,15 +494,12 @@ def decode_tokens(m):
     return pad_embedding(m)
 
 
-def make_run_step(m):
-    # TODO implement this function
-    def run_step(reduction, element):
-        m["model"].zero_grad()
-        encoder_output = encode(merge(m, element, {"split": "training"}))
-        get_encoder_loss(merge(element, encoder_output))
-        decode_tokens(merge(m, element, encoder_output))
-        return transform_("step_count", inc, reduction)
-    return run_step
+def run_step(reduction, element):
+    reduction["model"].zero_grad()
+    encoder_output = encode(merge(reduction, element, {"split": "training"}))
+    get_encoder_loss(merge(element, encoder_output))
+    decode_tokens(merge(reduction, element, encoder_output))
+    return transform_("step_count", inc, reduction)
 
 
 def initialize(m):
@@ -524,7 +521,6 @@ def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as file:
-        build(reduce,
-              make_run_step,
+        build(partial(reduce, run_step),
               identity,
               get_steps)(set_val_("file", file, load(hyperparameter)))
