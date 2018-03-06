@@ -20,11 +20,11 @@ def slurp(path):
 
 
 hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
-embedding = vocab.GloVe("6B", 50)
-vocabulary_size = first(embedding.vectors.size())
+glove = vocab.GloVe("6B", 50)
+vocabulary_size = first(glove.vectors.size())
 embedding_vectors = torch.cat(
     # TODO initialize <UNK> with zeros
-    (embedding.vectors, init.kaiming_normal(torch.zeros(1, embedding.dim))))
+    (glove.vectors, init.kaiming_normal(torch.zeros(1, glove.dim))))
 bag_size = 128
 
 
@@ -310,15 +310,17 @@ bag = comp(tuple,
            partial(map, bag_),
            partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
-get_index = partial(aid.flip(embedding.stoi.get), vocabulary_size)
-get_embedding = comp(tuple,
-                     partial(map, comp(get_index,
-                                       partial(aid.flip(get), "lower_"))))
+get_index = partial(aid.flip(glove.stoi.get), vocabulary_size)
+get_embedding_vector = comp(tuple,
+                            partial(map, comp(get_index,
+                                              partial(aid.flip(get),
+                                                      "lower_"))))
+
 # TODO implement this function
 convert = comp(apply(comp, map(make_set,
                                {"bag": bag,
                                 "lengths": count,
-                                "embedding": get_embedding})),
+                                "embedding": get_embedding_vector})),
                remove_tokens)
 
 
