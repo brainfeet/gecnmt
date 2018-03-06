@@ -182,7 +182,8 @@ def partition(n, *more):
         return funcy.partition(n, n, last(more))
 
 
-partition_by = comp(partial(map, tuple), funcy.partition_by)
+partition_by = comp(partial(map, tuple),
+                    funcy.partition_by)
 
 
 def contains_(coll, k):
