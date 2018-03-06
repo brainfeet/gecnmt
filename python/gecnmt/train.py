@@ -36,7 +36,13 @@ def get_model(m):
                                dropout=m["dropout"])
     model.encoder_linear = nn.Linear(get_bidirectional_size(m["hidden_size"]),
                                      dim)
-    # TODO add the decoder's layers
+    model.attention = nn.Linear(get_bidirectional_size(m["hidden_size"]),
+                                m["max_length"])
+    model.attention_combiner = nn.Linear(
+        get_bidirectional_size(m["hidden_size"]),
+        m["hidden_size"])
+    model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
+    # TODO set out
     return model
 
 
