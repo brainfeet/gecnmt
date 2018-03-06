@@ -406,6 +406,7 @@ def get_steps(m):
                                               map(json.loads,
                                                   (line_seq(m["file"])))))))))
 
+get_mse = nn.MSELoss()
 
 def make_run_step(m):
     # TODO implement this function
