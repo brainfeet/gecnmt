@@ -31,11 +31,11 @@ bag_size = 128
 
 def get_model(m):
     model = nn.Module()
-    model.gru = nn.GRU(bag_size,
-                       m["hidden_size"],
-                       m["num_layers"],
-                       bidirectional=True,
-                       dropout=m["dropout"])
+    model.encoder_gru = nn.GRU(bag_size,
+                               m["hidden_size"],
+                               m["num_layers"],
+                               bidirectional=True,
+                               dropout=m["dropout"])
     return model
 
 
@@ -73,7 +73,7 @@ def get_hidden(m):
 
 
 def encode(m):
-    output = m["model"].gru(rnn.pack_padded_sequence(m["bag"],
+    output = m["model"].encoder_gru(rnn.pack_padded_sequence(m["bag"],
                                                        m["lengths"]),
                               get_hidden(m))
     # TODO concatenate embeddings
