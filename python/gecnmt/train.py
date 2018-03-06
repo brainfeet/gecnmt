@@ -20,7 +20,8 @@ def slurp(path):
 
 
 hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
-glove = vocab.GloVe("6B", 50)
+dim = 50
+glove = vocab.GloVe("6B", dim)
 vocabulary_size = first(glove.vectors.size())
 embedding_vectors = torch.cat(
     # TODO initialize <UNK> with zeros
@@ -323,11 +324,28 @@ get_pretrained_embedding = comp(tuple,
                                 partial(map, comp(get_index,
                                                   partial(aid.flip(get),
                                                           "lower_"))))
+
+
+def keys(map):
+    return tuple(map.keys())
+
+
+def get_embedded_vector(x):
+    return tuple(repeat(dim, if_(x, 1, 0)))
+
+
+glove_words = keys(glove.stoi)
+get_embedded = comp(tuple,
+                    partial(map, comp(get_embedded_vector,
+                                      partial(contains_, glove_words),
+                                      partial(aid.flip(get),
+                                              "lower_"))))
 # TODO implement this function
 convert_from_tokens = comp(
     apply(comp,
           map(make_set,
               {"bag": bag,
+               "embedded": get_embedded,
                "lengths": count,
                "pretrained_embedding": get_pretrained_embedding})),
     remove_tokens)
@@ -370,6 +388,7 @@ def make_pad_all(x):
 
 pad_step = apply(comp,
                  map(make_pad_all, {"bag": zero_bag,
+                                    "embedded": get_embedded_vector(False),
                                     "pretrained_embedding": 0}))
 
 
@@ -388,10 +407,13 @@ convert_to_variables = comp(partial(transform_,
                             partial(transform_,
                                     multi_path("bag",
                                                "pretrained_embedding",
+                                               "embedded",
                                                "input-bpes",
                                                "output-bpes"),
                                     get_variable),
-                            partial(transform_, "bag", torch.FloatTensor),
+                            partial(transform_,
+                                    multi_path("bag", "embedded"),
+                                    torch.FloatTensor),
                             partial(transform_,
                                     multi_path("pretrained_embedding",
                                                "input-bpes",
