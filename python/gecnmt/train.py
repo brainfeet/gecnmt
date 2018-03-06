@@ -407,18 +407,17 @@ def batch_transpose(input):
     return torch.transpose(input, 0, 1)
 
 
-def get_input_output(input_output):
-    input, output = input_output
+def get_input_output(input, output):
     return {"input_reference_bpe": input,
             "output_reference_bpe": output}
 
 
 def pair(m):
     return set_val_("reference_bpes",
-                    map(comp(get_input_output,
-                             vector),
-                        tuple(m["input-reference-bpes"]),
-                        tuple(m["output-reference-bpes"])),
+                    apply(map,
+                          get_input_output,
+                          map(tuple, (m["input-reference-bpes"],
+                                      m["output-reference-bpes"]))),
                     m)
 
 
