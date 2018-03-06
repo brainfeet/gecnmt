@@ -301,7 +301,6 @@ def increment_vector(reduction, c):
 
 # TODO make repeat persistent
 repeat = aid.flip(funcy.repeat)
-
 # if tuple isn't called, repeat doesn't persist
 zero_bag = tuple(repeat(bag_size, 0))
 bag_ = partial(reduce, increment_vector, zero_bag)
@@ -310,12 +309,10 @@ bag = comp(tuple,
            partial(map, bag_),
            partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
-
 get_index = partial(aid.flip(embedding.stoi.get), vocabulary_size)
 get_embedding = comp(tuple,
                      partial(map, comp(get_index,
                                        partial(aid.flip(get), "lower_"))))
-
 # TODO implement this function
 convert = comp(apply(comp,
                      map(partial(apply, make_set),
