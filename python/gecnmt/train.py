@@ -315,7 +315,6 @@ get_embedding_vector = comp(tuple,
                             partial(map, comp(get_index,
                                               partial(aid.flip(get),
                                                       "lower_"))))
-
 # TODO implement this function
 convert = comp(apply(comp, map(make_set,
                                {"bag": bag,
