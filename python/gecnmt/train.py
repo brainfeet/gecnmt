@@ -451,7 +451,8 @@ get_mse = nn.MSELoss()
 
 def get_encoder_loss(m):
     # TODO implement this function
-    return torch.mul(m["linear_embedding"], m["embedded"])
+    return get_mse(torch.mul(m["linear_embedding"], m["embedded"]),
+                   m["pretrained_embedding"])
 
 
 def make_run_step(m):
