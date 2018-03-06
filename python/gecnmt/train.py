@@ -23,7 +23,7 @@ hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
 embedding = vocab.GloVe("6B", 50)
 vocabulary_size = first(embedding.vectors.size())
 embedding_vectors = torch.cat(
-    # TODO initialize <UNK> with zero
+    # TODO initialize <UNK> with zeros
     (embedding.vectors, init.kaiming_normal(torch.zeros(1, embedding.dim))))
 bag_size = 128
 
@@ -257,6 +257,7 @@ remove_tokens = partial(transform_,
                                               comp(determiner_,
                                                    partial(aid.flip(get),
                                                            "tag_")),
+                                              # TODO check tag_
                                               comp(preposition_,
                                                    partial(aid.flip(get),
                                                            "lower_"))))))
