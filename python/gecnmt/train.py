@@ -348,7 +348,8 @@ def make_pad(n, placeholder):
     return pad
 
 
-def make_pad_all(k, placeholder):
+def make_pad_all(x):
+    k, placeholder = x
     def pad_all(m):
         return transform_((k, ALL),
                           make_pad(first(m["lengths"]), placeholder),
@@ -356,10 +357,9 @@ def make_pad_all(k, placeholder):
     return pad_all
 
 
-def pad_step(m):
-    return apply(comp,
-                 map(partial(apply, make_pad_all), (("bag", zero_bag),
-                                                    ("embedding", 0))))(m)
+pad_step = apply(comp,
+                 map(make_pad_all, {"bag": zero_bag,
+                                    "embedding": 0}))
 
 
 def batch_transpose(input):
