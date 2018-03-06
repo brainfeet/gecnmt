@@ -171,8 +171,10 @@ def greater_than(x, y):
     return x > y
 
 
-def get(m, k):
-    return m[k]
+def get(m, *more):
+    if equal(count(more), 1):
+        return m[first(more)]
+    return m.get(first(more), second(more))
 
 
 def partition(n, *more):
