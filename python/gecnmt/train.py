@@ -77,10 +77,11 @@ def encode(m):
     outputs = m["model"].encoder_gru(rnn.pack_padded_sequence(m["bag"],
                                                               m["lengths"]),
                                      get_hidden(m))
-    # TODO concatenate embeddings
     gru_embedding = first(rnn.pad_packed_sequence(first(outputs)))
     linear_embedding = m["model"].encoder_linear(gru_embedding)
-    return {"linear_embedding": linear_embedding,
+    return {"encoder_embedding": torch.cat((gru_embedding, linear_embedding),
+                                           2),
+            "linear_embedding": linear_embedding,
             "hidden": last(outputs)}
 
 
