@@ -23,3 +23,13 @@ comp = compose
 
 def str(*more):
     return str_join("", walk(builtins.str, more))
+
+
+def get_items(coll):
+    if isinstance(coll, dict):
+        return coll.items()
+    return coll
+
+
+def map(f, *colls):
+    return builtins.map(f, *builtins.map(get_items, colls))
