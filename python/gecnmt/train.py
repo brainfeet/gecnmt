@@ -416,10 +416,9 @@ def get_input_output(input_output):
 def pair(m):
     return set_val_("reference_bpes",
                     map(comp(get_input_output,
-                             partial(map, tuple),
                              vector),
-                        m["input-reference-bpes"],
-                        m["output-reference-bpes"]),
+                        tuple(m["input-reference-bpes"]),
+                        tuple(m["output-reference-bpes"])),
                     m)
 
 
@@ -489,9 +488,16 @@ def pad_embedding(m):
                                      m["encoder_embedding"].size())))))
 
 
-def decode_tokens(m):
+def decode_token(reduction, element):
     # TODO implement this function
-    return pad_embedding(m)
+    reduction["model"].embedding(element["input_reference_bpe"])
+    return reduction
+
+
+def decode_tokens(m):
+    return reduce(decode_token,
+                  set_val_("padded_embedding", pad_embedding(m), m),
+                  m["reference_bpes"])
 
 
 def run_step(reduction, element):
