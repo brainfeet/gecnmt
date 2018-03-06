@@ -181,12 +181,12 @@
        (map (comp (partial map index)
                   (partial (aid/flip str/split) #" ")))
        (map (fn [tokens bpes]
-              {:length      (count bpes)
-               :input-bpes  (->> bpes
-                                 (s/setval s/BEGINNING [0])
-                                 drop-last)
-               :output-bpes bpes
-               :tokens      tokens})
+              {:length                (count bpes)
+               :input-reference-bpes  (->> bpes
+                                           (s/setval s/BEGINNING [0])
+                                           drop-last)
+               :output-reference-bpes bpes
+               :tokens                tokens})
             (map read-string random))))
 
 (def get-count-filename
