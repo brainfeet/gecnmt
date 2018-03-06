@@ -282,8 +282,9 @@ def lemmatize(token):
 
 
 def make_set(x):
-    return build(partial(set_val_, first(x)),
-                 comp(second(x),
+    k, f = x
+    return build(partial(set_val_, k),
+                 comp(f,
                       partial(aid.flip(get), "tokens")),
                  identity)
 
