@@ -449,11 +449,17 @@ def get_steps(m):
 get_mse = nn.MSELoss()
 
 
+def get_encoder_loss(m):
+    # TODO implement this function
+    return torch.mul(m["linear_embedding"], m["embedded"])
+
+
 def make_run_step(m):
     # TODO implement this function
     def run_step(reduction, element):
         m["model"].zero_grad()
-        encode(merge(m, element, {"split": "training"}))
+        encoder_output = encode(merge(m, element, {"split": "training"}))
+        get_encoder_loss(merge(element, encoder_output))
         return transform_("step_count", inc, reduction)
     return run_step
 
