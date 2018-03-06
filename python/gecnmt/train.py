@@ -408,8 +408,8 @@ def batch_transpose(input):
 
 def get_input_output(input_output):
     input, output = input_output
-    return {"input": input,
-            "output": output}
+    return {"input_reference_bpe": input,
+            "output_reference_bpe": output}
 
 
 def pair(m):
