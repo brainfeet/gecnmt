@@ -316,11 +316,11 @@ get_embedding_vector = comp(tuple,
                                               partial(aid.flip(get),
                                                       "lower_"))))
 # TODO implement this function
-convert = comp(apply(comp, map(make_set,
-                               {"bag": bag,
-                                "lengths": count,
-                                "embedding": get_embedding_vector})),
-               remove_tokens)
+convert_from_tokens = comp(apply(comp, map(make_set,
+                                           {"bag": bag,
+                                            "lengths": count,
+                                            "embedding": get_embedding_vector})),
+                           remove_tokens)
 
 
 def sort_by(comp_, key_fn, coll):
@@ -372,24 +372,25 @@ get_variable = comp(batch_transpose,
 embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
+convert_to_variables = comp(partial(transform_, "embedding", embedding),
+                            partial(transform_,
+                                    multi_path("bag",
+                                               "embedding",
+                                               "input-bpes",
+                                               "output-bpes"),
+                                    get_variable),
+                            partial(transform_, "bag", torch.FloatTensor),
+                            partial(transform_,
+                                    multi_path("embedding",
+                                               "input-bpes",
+                                               "output-bpes"),
+                                    torch.LongTensor),
+                            pad_step)
 
 
 def get_steps(m):
     # TODO implement this function
-    return map(comp(partial(transform_, "embedding", embedding),
-                    partial(transform_,
-                            multi_path("bag",
-                                       "embedding",
-                                       "input-bpes",
-                                       "output-bpes"),
-                            get_variable),
-                    partial(transform_, "bag", torch.FloatTensor),
-                    partial(transform_,
-                            multi_path("embedding",
-                                       "input-bpes",
-                                       "output-bpes"),
-                            torch.LongTensor),
-                    pad_step,
+    return map(comp(convert_to_variables,
                     partial(apply, merge_with, vector),
                     partial(sort_by,
                             greater_than,
@@ -397,7 +398,7 @@ def get_steps(m):
                apply(concat,
                      map(partial(partition, m["batch_size"]),
                          partition_by(partial(aid.flip(get), "length"),
-                                      map(convert,
+                                      map(convert_from_tokens,
                                           filter(comp(
                                               partial(greater_than,
                                                       m["max_length"]),
