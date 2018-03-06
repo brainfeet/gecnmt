@@ -311,11 +311,17 @@ bag = comp(tuple,
            partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
 
+get_index = partial(aid.flip(embedding.stoi.get), vocabulary_size)
+get_embedding = comp(tuple,
+                     partial(map, comp(get_index,
+                                       partial(aid.flip(get), "lower_"))))
+
 # TODO implement this function
 convert = comp(apply(comp,
                      map(partial(apply, make_set),
                          (("bag", bag),
-                          ("lengths", count)))),
+                          ("lengths", count),
+                          ("embedding", get_embedding)))),
                remove_tokens)
 
 
