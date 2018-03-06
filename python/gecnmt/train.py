@@ -36,6 +36,8 @@ def get_model(m):
                                m["num_layers"],
                                bidirectional=True,
                                dropout=m["dropout"])
+    model.encoder_linear = nn.Linear(get_bidirectional_size(m["hidden_size"]),
+                                     dim)
     # TODO add the decoder's layers
     return model
 
@@ -75,8 +77,8 @@ def get_hidden(m):
 
 def encode(m):
     output = m["model"].encoder_gru(rnn.pack_padded_sequence(m["bag"],
-                                                       m["lengths"]),
-                              get_hidden(m))
+                                                             m["lengths"]),
+                                    get_hidden(m))
     # TODO concatenate embeddings
     return {"encoder_embedding": rnn.pad_packed_sequence(first(output)),
             "hidden": last(output)}
