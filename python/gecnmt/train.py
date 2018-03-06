@@ -41,6 +41,7 @@ def get_model(m):
                                dropout=m["dropout"])
     model.encoder_linear = nn.Linear(get_bidirectional_size(m["hidden_size"]),
                                      dim)
+    model.embedding = nn.Embedding(bpe_size, m["hidden_size"])
     model.attention = nn.Linear(get_bidirectional_size(m["hidden_size"]),
                                 m["max_length"])
     model.attention_combiner = nn.Linear(
