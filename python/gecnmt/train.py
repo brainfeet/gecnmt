@@ -312,7 +312,12 @@ bag = comp(tuple,
            partial(map, bag_),
            partial(transform_, (FIRST, FIRST), lower_case),
            partial(map, lemmatize))
-get_index = partial(aid.flip(glove.stoi.get), vocabulary_size)
+
+
+def get_index(s):
+    return get(glove.stoi, s, vocabulary_size)
+
+
 get_pretrained_embedding = comp(tuple,
                                 partial(map, comp(get_index,
                                                   partial(aid.flip(get),
