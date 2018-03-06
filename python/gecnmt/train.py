@@ -36,6 +36,7 @@ def get_model(m):
                                m["num_layers"],
                                bidirectional=True,
                                dropout=m["dropout"])
+    # TODO add the decoder's layers
     return model
 
 
