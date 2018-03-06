@@ -29,7 +29,7 @@ embedding_vectors = torch.cat(
 bag_size = 128
 
 
-def get_encoder(m):
+def get_model(m):
     model = nn.Module()
     model.gru = nn.GRU(bag_size,
                        m["hidden_size"],
@@ -73,9 +73,10 @@ def get_hidden(m):
 
 
 def encode(m):
-    output = m["encoder"].gru(rnn.pack_padded_sequence(m["bag"],
+    output = m["model"].gru(rnn.pack_padded_sequence(m["bag"],
                                                        m["lengths"]),
                               get_hidden(m))
+    # TODO concatenate embeddings
     return {"encoder_embedding": rnn.pad_packed_sequence(first(output)),
             "hidden": last(output)}
 
@@ -447,7 +448,7 @@ get_mse = nn.MSELoss()
 def make_run_step(m):
     # TODO implement this function
     def run_step(reduction, element):
-        m["encoder"].zero_grad()
+        m["model"].zero_grad()
         encode(merge(m, element, {"split": "training"}))
         return transform_("step_count", inc, reduction)
     return run_step
@@ -455,7 +456,7 @@ def make_run_step(m):
 
 def load(m):
     # TODO implement this function
-    return merge(m, {"encoder": get_encoder(m),
+    return merge(m, {"model": get_model(m),
                      "step_count": 0})
 
 
