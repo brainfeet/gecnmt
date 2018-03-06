@@ -32,26 +32,6 @@ count = len
 bpe_size = count(bpe)
 
 
-def get_model(m):
-    model = nn.Module()
-    model.encoder_gru = nn.GRU(bag_size,
-                               m["hidden_size"],
-                               m["num_layers"],
-                               bidirectional=True,
-                               dropout=m["dropout"])
-    model.encoder_linear = nn.Linear(get_bidirectional_size(m["hidden_size"]),
-                                     dim)
-    model.embedding = nn.Embedding(bpe_size, m["hidden_size"])
-    model.attention = nn.Linear(get_bidirectional_size(m["hidden_size"]),
-                                m["max_length"])
-    model.attention_combiner = nn.Linear(
-        get_bidirectional_size(m["hidden_size"]),
-        m["hidden_size"])
-    model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
-    model.out = nn.Linear(m["hidden_size"], bpe_size)
-    return model
-
-
 def and_(*more):
     if count(more) == 2:
         return first(more) and last(more)
@@ -68,6 +48,29 @@ def multiply(*more):
     if equal(count(more), 2):
         return first(more) * last(more)
     return multiply(first(more), multiply(*rest(more)))
+
+
+get_concatenated_size = partial(multiply, 2)
+
+
+def get_model(m):
+    model = nn.Module()
+    model.encoder_gru = nn.GRU(bag_size,
+                               m["hidden_size"],
+                               m["num_layers"],
+                               bidirectional=True,
+                               dropout=m["dropout"])
+    model.encoder_linear = nn.Linear(get_bidirectional_size(m["hidden_size"]),
+                                     dim)
+    model.embedding = nn.Embedding(bpe_size, m["hidden_size"])
+    model.attention = nn.Linear(get_concatenated_size(m["hidden_size"]),
+                                m["max_length"])
+    model.attention_combiner = nn.Linear(
+        get_concatenated_size(m["hidden_size"]),
+        m["hidden_size"])
+    model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
+    model.out = nn.Linear(m["hidden_size"], bpe_size)
+    return model
 
 
 get_bidirectional_size = partial(multiply, 2)
