@@ -281,9 +281,9 @@ def lemmatize(token):
                token["text"])
 
 
-def make_set(k, f):
-    return build(partial(set_val_, k),
-                 comp(f,
+def make_set(x):
+    return build(partial(set_val_, first(x)),
+                 comp(second(x),
                       partial(aid.flip(get), "tokens")),
                  identity)
 
@@ -314,10 +314,10 @@ get_embedding = comp(tuple,
                      partial(map, comp(get_index,
                                        partial(aid.flip(get), "lower_"))))
 # TODO implement this function
-convert = comp(apply(comp, map(partial(apply, make_set),
-                               (("bag", bag),
-                                ("lengths", count),
-                                ("embedding", get_embedding)))),
+convert = comp(apply(comp, map(make_set,
+                               {"bag": bag,
+                                "lengths": count,
+                                "embedding": get_embedding})),
                remove_tokens)
 
 
