@@ -413,12 +413,12 @@ def get_input_output(input_output):
 
 
 def pair(m):
-    return set_val_("bpes",
+    return set_val_("reference_bpes",
                     map(comp(get_input_output,
                              partial(map, tuple),
                              vector),
-                        m["input-bpes"],
-                        m["output-bpes"]),
+                        m["input-reference-bpes"],
+                        m["output-reference-bpes"]),
                     m)
 
 
@@ -435,16 +435,16 @@ convert_to_variables = comp(pair,
                                     multi_path("bag",
                                                "pretrained_embedding",
                                                "embedded",
-                                               "input-bpes",
-                                               "output-bpes"),
+                                               "input-reference-bpes",
+                                               "output-reference-bpes"),
                                     get_variable),
                             partial(transform_,
                                     multi_path("bag", "embedded"),
                                     torch.FloatTensor),
                             partial(transform_,
                                     multi_path("pretrained_embedding",
-                                               "input-bpes",
-                                               "output-bpes"),
+                                               "input-reference-bpes",
+                                               "output-reference-bpes"),
                                     torch.LongTensor),
                             pad_step)
 
