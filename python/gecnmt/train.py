@@ -544,6 +544,7 @@ def run_step(reduction, element):
                                encoder_output,
                                {"split": "training"}))["loss"]
     loss.backward()
+    reduction["optimizer"].step()
     return transform_("step_count", inc, reduction)
 
 
