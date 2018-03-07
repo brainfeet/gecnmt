@@ -540,12 +540,23 @@ def mod(num, div):
     return num % div
 
 
+def make_run_internal_step(m):
+    def run_internal_step(step):
+        return decode_tokens(merge(m,
+                                   step,
+                                   encode(merge(m,
+                                                step,
+                                                {"split": "training"})),
+                                   {"split": "training"}))["loss"]
+    return run_internal_step
+
+
 def validate_internally(m):
     # TODO implement this function
     with open(get_sorted_path(merge(m,
                                     {"dataset": "simple",
                                      "split": "validation"}))) as file:
-        set_val_("file", file, m)
+        map(make_run_internal_step(m), get_steps(set_val_("file", file, m)))
 
 
 def run_training_step(reduction, element):
