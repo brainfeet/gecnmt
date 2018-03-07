@@ -548,7 +548,7 @@ def validate_internally(m):
         set_val_("file", file, m)
 
 
-def run_step(reduction, element):
+def run_training_step(reduction, element):
     reduction["model"].zero_grad()
     loss = decode_tokens(merge(reduction,
                                element,
@@ -589,6 +589,6 @@ def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as file:
-        build(partial(reduce, run_step),
+        build(partial(reduce, run_training_step),
               identity,
               get_steps)(set_val_("file", file, load(hyperparameter)))
