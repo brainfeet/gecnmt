@@ -102,10 +102,7 @@ def encode(m):
 
 
 def get_sorted_path(m):
-    return path.join(dataset_path,
-                     m["dataset"],
-                     m["split"],
-                     "sorted.txt")
+    return path.join(dataset_path, m["dataset"], m["split"], "sorted.txt")
 
 
 def reduce(f, *more):
