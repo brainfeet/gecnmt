@@ -561,16 +561,18 @@ def validate_internally(m):
                                      get_steps(set_val_("file", file, m))))))
 
 
-def run_training_step(reduction, element):
-    reduction["model"].zero_grad()
-    loss = decode_tokens(merge(reduction,
-                               element,
-                               encode(merge(reduction,
-                                            element,
-                                            {"split": "training"})),
+def learn(m):
+    m["model"].zero_grad()
+    loss = decode_tokens(merge(m,
+                               encode(set_val_("split", "training", m)),
                                {"split": "training"}))["loss"]
     loss.backward()
-    reduction["optimizer"].step()
+    m["optimizer"].step()
+    return loss
+
+
+def run_training_step(reduction, element):
+    learn(merge(reduction, element, {"split": "training"}))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
         validate_internally(reduction)
