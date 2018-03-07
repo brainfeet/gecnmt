@@ -538,10 +538,11 @@ def decode_tokens(m):
 
 def run_step(reduction, element):
     reduction["model"].zero_grad()
-    encoder_output = encode(merge(reduction, element, {"split": "training"}))
     loss = decode_tokens(merge(reduction,
                                element,
-                               encoder_output,
+                               encode(merge(reduction,
+                                            element,
+                                            {"split": "training"})),
                                {"split": "training"}))["loss"]
     loss.backward()
     reduction["optimizer"].step()
