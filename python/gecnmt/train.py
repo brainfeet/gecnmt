@@ -491,8 +491,8 @@ def pad_embedding(m):
 
 
 def decode_token(reduction, element):
-    # TODO implement this function
-    reduction["model"].embedding(element["input_reference_bpe"])
+    decoder_embedding = reduction["model"].embedding(
+        element["input_reference_bpe"]).unsqueeze(0)
     return reduction
 
 
