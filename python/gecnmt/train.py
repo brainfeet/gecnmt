@@ -574,6 +574,7 @@ def learn(m):
                                encode(set_val_("split", "training", m)),
                                {"split": "training"}))["loss"]
     loss.backward()
+    # TODO print loss
     divide(loss, m["length"])
     m["optimizer"].step()
     return loss
