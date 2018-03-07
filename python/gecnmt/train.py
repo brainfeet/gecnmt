@@ -561,7 +561,9 @@ def validate_internally(m):
 
 def validate(m):
     # TODO implement this function
+    # TODO turn on eval
     validate_internally(set_val_("split", "validation", m))
+    # TODO turn on train
 
 
 def divide(*more):
