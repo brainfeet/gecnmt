@@ -109,8 +109,8 @@ def encode(m):
     linear_embedding = m["model"].encoder_linear(gru_embedding)
     return {"encoder_embedding": torch.cat((gru_embedding, linear_embedding),
                                            2),
-            "encoder_loss": get_mse(torch.mul(linear_embedding, m["embedded"]),
-                                    m["pretrained_embedding"])}
+            "loss": get_mse(torch.mul(linear_embedding, m["embedded"]),
+                            m["pretrained_embedding"])}
 
 
 def get_sorted_path(m):
@@ -522,7 +522,7 @@ def decode_token(reduction, element):
         get_hidden(set_val_("encoder", False, reduction)))
     # TODO add decoder_bpes
     return transform_(
-        "decoder_loss",
+        "loss",
         partial(add,
                 get_cross_entropy(reduction["model"].out(output).squeeze(0),
                                   element["output_reference_bpe"])),
@@ -532,10 +532,7 @@ def decode_token(reduction, element):
 def decode_tokens(m):
     # TODO add decoder_bpes
     return reduce(decode_token,
-                  merge(m,
-                        {"decoder_loss": autograd.Variable(
-                            torch.FloatTensor((0,))),
-                            "padded_embedding": pad_embedding(m)}),
+                  set_val_("padded_embedding", pad_embedding(m), m),
                   m["reference_bpes"])
 
 
