@@ -538,10 +538,11 @@ def decode_tokens(m):
 def run_step(reduction, element):
     reduction["model"].zero_grad()
     encoder_output = encode(merge(reduction, element, {"split": "training"}))
-    decode_tokens(merge(reduction,
-                        element,
-                        encoder_output,
-                        {"split": "training"}))
+    loss = decode_tokens(merge(reduction,
+                               element,
+                               encoder_output,
+                               {"split": "training"}))["loss"]
+    loss.backward()
     return transform_("step_count", inc, reduction)
 
 
