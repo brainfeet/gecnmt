@@ -465,7 +465,6 @@ convert_to_variables = comp(pair,
 
 
 def get_steps(m):
-    # TODO implement this function
     return map(comp(convert_to_variables,
                     partial(apply, merge_with, vector),
                     partial(sort_by,
