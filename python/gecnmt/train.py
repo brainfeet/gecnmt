@@ -570,7 +570,6 @@ def divide(*more):
 
 def learn(m):
     m["model"].zero_grad()
-    # TODO divide the loss by length
     loss = decode_tokens(merge(m,
                                encode(set_val_("split", "training", m)),
                                {"split": "training"}))["loss"]
