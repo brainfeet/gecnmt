@@ -467,12 +467,17 @@ convert_to_variables = comp(pair,
 
 def get_steps(m):
     return map(comp(convert_to_variables,
+                    if_(equal(m["split"], "training"),
+                        identity,
+                        partial(transform_, MAP_VALS, vector)),
                     partial(apply, merge_with, vector),
                     partial(sort_by,
                             greater_than,
                             partial(aid.flip(get), "lengths"))),
                apply(concat,
-                     map(partial(partition, m["batch_size"]),
+                     map(partial(partition, if_(equal(m["split"], "training"),
+                                                m["batch_size"],
+                                                1)),
                          partition_by(partial(aid.flip(get), "length"),
                                       map(convert_from_tokens,
                                           filter(comp(
@@ -542,12 +547,7 @@ def mod(num, div):
 
 def make_run_internal_step(m):
     def run_internal_step(step):
-        return decode_tokens(merge(m,
-                                   step,
-                                   encode(merge(m,
-                                                step,
-                                                {"split": "training"})),
-                                   {"split": "training"}))["loss"]
+        return decode_tokens(merge(m, step, encode(merge(m, step))))["loss"]
     return run_internal_step
 
 
@@ -583,7 +583,7 @@ def learn(m):
 
 
 def run_training_step(reduction, step):
-    learn(merge(reduction, step, {"split": "training"}))
+    learn(merge(reduction, step))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
         validate(reduction)
