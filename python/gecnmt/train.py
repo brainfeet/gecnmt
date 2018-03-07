@@ -93,8 +93,7 @@ def encode(m):
     linear_embedding = m["model"].encoder_linear(gru_embedding)
     return {"encoder_embedding": torch.cat((gru_embedding, linear_embedding),
                                            2),
-            "linear_embedding": linear_embedding,
-            "hidden": last(outputs)}
+            "linear_embedding": linear_embedding}
 
 
 def get_sorted_path(m):
