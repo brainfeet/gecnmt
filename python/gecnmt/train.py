@@ -499,6 +499,9 @@ def pad_embedding(m):
                                      m["encoder_embedding"].size())))))
 
 
+get_cross_entropy = nn.CrossEntropyLoss()
+
+
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
         element["input_reference_bpe"]).unsqueeze(0)
@@ -521,12 +524,18 @@ def decode_token(reduction, element):
                                    reduction["padded_embedding"])))),
                           2))),
         get_hidden(set_val_("encoder", False, reduction)))
-    return reduction
+    return transform_(
+        "loss",
+        partial(add,
+                get_cross_entropy(reduction["model"].out(output).squeeze(0),
+                                  element["output_reference_bpe"])),
+        reduction)
 
 
 def decode_tokens(m):
     return reduce(decode_token,
-                  set_val_("padded_embedding", pad_embedding(m), m),
+                  merge(m, {"loss": autograd.Variable(torch.FloatTensor((0,))),
+                            "padded_embedding": pad_embedding(m)}),
                   m["reference_bpes"])
 
 
