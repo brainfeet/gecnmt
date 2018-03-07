@@ -556,10 +556,13 @@ def make_run_internal_step(m):
 def validate_internally(m):
     # TODO implement this function
     with open(get_sorted_path(merge(m,
-                                    {"dataset": "simple",
-                                     "split": "validation"}))) as file:
+                                    {"dataset": "simple"}))) as file:
         return numpy.mean(tuple((map(make_run_internal_step(m),
                                      get_steps(set_val_("file", file, m))))))
+
+
+def validate(m):
+    validate_internally(set_val_("split", "validation", m))
 
 
 def divide(*more):
@@ -584,7 +587,7 @@ def run_training_step(reduction, step):
     learn(merge(reduction, step, {"split": "training"}))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
-        validate_internally(reduction)
+        validate(reduction)
     return transform_("step_count", inc, reduction)
 
 
