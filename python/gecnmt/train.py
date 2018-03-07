@@ -494,17 +494,19 @@ def pad_embedding(m):
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
         element["input_reference_bpe"]).unsqueeze(0)
-    torch.bmm(
-        batch_transpose(
-            F.softmax(
-                reduction["model"].attention(
-                    torch.cat((decoder_embedding,
-                               get_hidden(set_val_("encoder",
-                                                   False,
-                                                   reduction))),
-                              2)),
-                2)),
-        batch_transpose(reduction["padded_embedding"]))
+    torch.cat((decoder_embedding,
+               batch_transpose(torch.bmm(
+                   batch_transpose(
+                       F.softmax(
+                           reduction["model"].attention(
+                               torch.cat((decoder_embedding,
+                                          get_hidden(set_val_("encoder",
+                                                              False,
+                                                              reduction))),
+                                         2)),
+                           2)),
+                   batch_transpose(reduction["padded_embedding"])))),
+              2)
     return reduction
 
 
