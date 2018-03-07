@@ -613,6 +613,8 @@ def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as file:
-        build(partial(reduce, run_training_step),
-              identity,
-              get_steps)(set_val_("file", file, load(hyperparameter)))
+        loaded = load(hyperparameter)
+        reduce(run_training_step,
+               loaded,
+               get_steps(merge(loaded, {"file": file,
+                                        "split": "training"})))
