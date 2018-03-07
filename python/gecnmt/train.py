@@ -496,9 +496,11 @@ def pad_embedding(m):
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
         element["input_reference_bpe"]).unsqueeze(0)
-    torch.cat((decoder_embedding,
-               get_hidden(set_val_("encoder", False, reduction))),
-              2)
+    reduction["model"].attention(torch.cat((decoder_embedding,
+                                            get_hidden(
+                                                set_val_("encoder", False,
+                                                         reduction))),
+                                           2))
     return reduction
 
 
