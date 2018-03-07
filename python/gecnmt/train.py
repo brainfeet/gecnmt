@@ -54,6 +54,12 @@ def multiply(*more):
 get_concatenated_size = partial(multiply, 2)
 
 
+def add(*more):
+    if equal(count(more), 2):
+        return first(more) + last(more)
+    return add(first(more), add(*rest(more)))
+
+
 def get_model(m):
     model = nn.Module()
     model.encoder_gru = nn.GRU(bag_size,
@@ -67,7 +73,9 @@ def get_model(m):
     model.attention = nn.Linear(get_concatenated_size(m["hidden_size"]),
                                 m["max_length"])
     model.attention_combiner = nn.Linear(
-        get_concatenated_size(m["hidden_size"]),
+        add(get_bidirectional_size(m["hidden_size"]),
+            dim,
+            m["hidden_size"]),
         m["hidden_size"])
     model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
     model.out = nn.Linear(m["hidden_size"], bpe_size)
@@ -494,19 +502,20 @@ def pad_embedding(m):
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
         element["input_reference_bpe"]).unsqueeze(0)
-    torch.cat((decoder_embedding,
-               batch_transpose(torch.bmm(
-                   batch_transpose(
-                       F.softmax(
-                           reduction["model"].attention(
-                               torch.cat((decoder_embedding,
-                                          get_hidden(set_val_("encoder",
-                                                              False,
-                                                              reduction))),
-                                         2)),
-                           2)),
-                   batch_transpose(reduction["padded_embedding"])))),
-              2)
+    reduction["model"].attention_combiner(
+        torch.cat((decoder_embedding,
+                   batch_transpose(torch.bmm(
+                       batch_transpose(
+                           F.softmax(
+                               reduction["model"].attention(
+                                   torch.cat((decoder_embedding,
+                                              get_hidden(set_val_("encoder",
+                                                                  False,
+                                                                  reduction))),
+                                             2)),
+                               2)),
+                       batch_transpose(reduction["padded_embedding"])))),
+                  2))
     return reduction
 
 
