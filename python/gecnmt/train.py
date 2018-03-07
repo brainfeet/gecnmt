@@ -3,6 +3,7 @@ import json
 import os.path as path
 
 import funcy
+import numpy
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
@@ -556,7 +557,8 @@ def validate_internally(m):
     with open(get_sorted_path(merge(m,
                                     {"dataset": "simple",
                                      "split": "validation"}))) as file:
-        map(make_run_internal_step(m), get_steps(set_val_("file", file, m)))
+        return numpy.mean(tuple((map(make_run_internal_step(m),
+                                     get_steps(set_val_("file", file, m))))))
 
 
 def run_training_step(reduction, element):
