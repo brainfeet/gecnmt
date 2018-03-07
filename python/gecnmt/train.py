@@ -562,6 +562,12 @@ def validate_internally(m):
                                      get_steps(set_val_("file", file, m))))))
 
 
+def divide(*more):
+    if equal(count(more), 2):
+        return first(more) / last(more)
+    return divide(first(more), divide(*rest(more)))
+
+
 def learn(m):
     m["model"].zero_grad()
     # TODO divide the loss by length
@@ -569,6 +575,7 @@ def learn(m):
                                encode(set_val_("split", "training", m)),
                                {"split": "training"}))["loss"]
     loss.backward()
+    divide(loss, m["length"])
     m["optimizer"].step()
     return loss
 
