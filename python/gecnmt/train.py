@@ -496,6 +496,9 @@ def pad_embedding(m):
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
         element["input_reference_bpe"]).unsqueeze(0)
+    torch.cat((decoder_embedding,
+               get_hidden(set_val_("encoder", False, reduction))),
+              2)
     return reduction
 
 
@@ -509,7 +512,10 @@ def run_step(reduction, element):
     reduction["model"].zero_grad()
     encoder_output = encode(merge(reduction, element, {"split": "training"}))
     get_encoder_loss(merge(element, encoder_output))
-    decode_tokens(merge(reduction, element, encoder_output))
+    decode_tokens(merge(reduction,
+                        element,
+                        encoder_output,
+                        {"split": "training"}))
     return transform_("step_count", inc, reduction)
 
 
