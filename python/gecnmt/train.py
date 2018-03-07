@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 import torch.nn.utils.rnn as rnn
+import torch.optim as optim
 import torchtext.vocab as vocab
 
 from gecnmt.clojure import *
@@ -554,9 +555,16 @@ def initialize(m):
     return m["model"]
 
 
+get_optimizer = comp(optim.Adam,
+                     partial(filter,
+                             partial(aid.flip(getattr), "requires_grad")))
+
+
 def load(m):
     # TODO implement this function
-    return merge(m, {"model": initialize(set_val_("model", get_model(m), m)),
+    model = initialize(set_val_("model", get_model(m), m))
+    return merge(m, {"model": model,
+                     "optimizer": get_optimizer(model.parameters()),
                      "step_count": 0})
 
 
