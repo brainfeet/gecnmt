@@ -98,6 +98,9 @@ def get_hidden(m):
                     m["hidden_size"])))
 
 
+get_mse = nn.MSELoss()
+
+
 def encode(m):
     outputs = m["model"].encoder_gru(rnn.pack_padded_sequence(m["bag"],
                                                               m["lengths"]),
@@ -106,7 +109,8 @@ def encode(m):
     linear_embedding = m["model"].encoder_linear(gru_embedding)
     return {"encoder_embedding": torch.cat((gru_embedding, linear_embedding),
                                            2),
-            "linear_embedding": linear_embedding}
+            "encoder_loss": get_mse(torch.mul(linear_embedding, m["embedded"]),
+                                    m["pretrained_embedding"])}
 
 
 def get_sorted_path(m):
@@ -479,14 +483,6 @@ def get_steps(m):
                                                   (line_seq(m["file"])))))))))
 
 
-get_mse = nn.MSELoss()
-
-
-def get_encoder_loss(m):
-    return get_mse(torch.mul(m["linear_embedding"], m["embedded"]),
-                   m["pretrained_embedding"])
-
-
 def pad_embedding(m):
     if equal(first(m["encoder_embedding"].size()), m["max_length"]):
         return m["encoder_embedding"]
@@ -525,7 +521,7 @@ def decode_token(reduction, element):
                           2))),
         get_hidden(set_val_("encoder", False, reduction)))
     return transform_(
-        "loss",
+        "decoder_loss",
         partial(add,
                 get_cross_entropy(reduction["model"].out(output).squeeze(0),
                                   element["output_reference_bpe"])),
@@ -534,7 +530,9 @@ def decode_token(reduction, element):
 
 def decode_tokens(m):
     return reduce(decode_token,
-                  merge(m, {"loss": autograd.Variable(torch.FloatTensor((0,))),
+                  merge(m,
+                        {"decoder_loss": autograd.Variable(
+                            torch.FloatTensor((0,))),
                             "padded_embedding": pad_embedding(m)}),
                   m["reference_bpes"])
 
@@ -542,7 +540,6 @@ def decode_tokens(m):
 def run_step(reduction, element):
     reduction["model"].zero_grad()
     encoder_output = encode(merge(reduction, element, {"split": "training"}))
-    get_encoder_loss(merge(element, encoder_output))
     decode_tokens(merge(reduction,
                         element,
                         encoder_output,
