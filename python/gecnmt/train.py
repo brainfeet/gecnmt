@@ -536,6 +536,18 @@ def decode_tokens(m):
                   m["reference_bpes"])
 
 
+def mod(num, div):
+    return num % div
+
+
+def validate_internally(m):
+    # TODO implement this function
+    with open(get_sorted_path(merge(m,
+                                    {"dataset": "simple",
+                                     "split": "validation"}))) as file:
+        set_val_("file", file, m)
+
+
 def run_step(reduction, element):
     reduction["model"].zero_grad()
     loss = decode_tokens(merge(reduction,
@@ -546,6 +558,9 @@ def run_step(reduction, element):
                                {"split": "training"}))["loss"]
     loss.backward()
     reduction["optimizer"].step()
+    if equal(mod(reduction["step_count"], reduction["validation_interval"]),
+             0):
+        validate_internally(reduction)
     return transform_("step_count", inc, reduction)
 
 
