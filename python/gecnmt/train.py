@@ -6,6 +6,7 @@ import funcy
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.nn.init as init
 import torch.nn.utils.rnn as rnn
 import torchtext.vocab as vocab
@@ -496,11 +497,12 @@ def pad_embedding(m):
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
         element["input_reference_bpe"]).unsqueeze(0)
-    reduction["model"].attention(torch.cat((decoder_embedding,
-                                            get_hidden(
-                                                set_val_("encoder", False,
-                                                         reduction))),
-                                           2))
+    F.softmax(reduction["model"].attention(torch.cat((decoder_embedding,
+                                                      get_hidden(
+                                                          set_val_("encoder",
+                                                                   False,
+                                                                   reduction))),
+                                                     2)), 2)
     return reduction
 
 
