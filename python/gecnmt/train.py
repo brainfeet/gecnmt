@@ -466,6 +466,7 @@ convert_to_variables = comp(pair,
 
 
 def get_steps(m):
+    # TODO cycle
     return map(comp(convert_to_variables,
                     if_(equal(m["split"], "training"),
                         identity,
