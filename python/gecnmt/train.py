@@ -520,6 +520,7 @@ def decode_token(reduction, element):
                                    reduction["padded_embedding"])))),
                           2))),
         get_hidden(set_val_("encoder", False, reduction)))
+    # TODO add decoder_bpes
     return transform_(
         "decoder_loss",
         partial(add,
@@ -529,6 +530,7 @@ def decode_token(reduction, element):
 
 
 def decode_tokens(m):
+    # TODO add decoder_bpes
     return reduce(decode_token,
                   merge(m,
                         {"decoder_loss": autograd.Variable(
