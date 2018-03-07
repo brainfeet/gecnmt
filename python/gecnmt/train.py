@@ -571,8 +571,8 @@ def learn(m):
     return loss
 
 
-def run_training_step(reduction, element):
-    learn(merge(reduction, element, {"split": "training"}))
+def run_training_step(reduction, step):
+    learn(merge(reduction, step, {"split": "training"}))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
         validate_internally(reduction)
