@@ -445,6 +445,7 @@ embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
 convert_to_variables = comp(pair,
+                            partial(transform_, "length", first),
                             partial(transform_,
                                     "pretrained_embedding",
                                     embedding),
