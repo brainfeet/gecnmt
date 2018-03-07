@@ -77,8 +77,12 @@ get_bidirectional_size = partial(multiply, 2)
 
 
 def get_hidden(m):
-    return autograd.Variable(init.kaiming_normal(
-        torch.zeros(get_bidirectional_size(m["num_layers"]),
+    return autograd.Variable(if_(m["encoder"],
+                                 init.kaiming_normal,
+                                 identity)(
+        torch.zeros(if_(m["encoder"],
+                        get_bidirectional_size,
+                        identity)(m["num_layers"]),
                     if_(equal(m["split"], "training"),
                         m["batch_size"],
                         1),
@@ -88,7 +92,7 @@ def get_hidden(m):
 def encode(m):
     outputs = m["model"].encoder_gru(rnn.pack_padded_sequence(m["bag"],
                                                               m["lengths"]),
-                                     get_hidden(m))
+                                     get_hidden(set_val_("encoder", True, m)))
     gru_embedding = first(rnn.pad_packed_sequence(first(outputs)))
     linear_embedding = m["model"].encoder_linear(gru_embedding)
     return {"encoder_embedding": torch.cat((gru_embedding, linear_embedding),
