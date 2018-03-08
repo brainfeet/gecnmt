@@ -509,11 +509,12 @@ get_nll = nn.NLLLoss()
 
 
 def decode_token(reduction, element):
-    decoder_embedding = torch.unsqueeze(reduction["model"].embedding(
-        if_(equal(reduction["split"], "training"),
-            element["input_reference_bpe"],
-            reduction["decoder-bpe"])),
-        0)
+    if equal(reduction["split"], "training"):
+        input_bpe = element["input_reference_bpe"]
+    else:
+        input_bpe = reduction["decoder-bpe"]
+    decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
+                                        0)
     gru_output, hidden = reduction["model"].decoder_gru(
         F.relu(
             reduction["model"].attention_combiner(
@@ -534,18 +535,18 @@ def decode_token(reduction, element):
     log_softmax_output = F.log_softmax(
         reduction["model"].out(first(gru_output)), 1)
     decoder_bpe = torch.squeeze(second(torch.topk(log_softmax_output, 1)), 1)
+    if equal(reduction["dataset"], "simple"):
+        add_loss = partial(add, get_nll(log_softmax_output,
+                                        element["output_reference_bpe"]))
+    else:
+        add_loss = identity
     return merge(
         transform_("decoder_bpes",
                    if_(equal(reduction["dataset"], "simple"),
                        identity,
                        partial(aid.flip(str),
                                bpe[str(first(decoder_bpe.data))])),
-                   transform_("loss",
-                              partial(add,
-                                      get_nll(log_softmax_output,
-                                              element[
-                                                  "output_reference_bpe"])),
-                              reduction)),
+                   transform_("loss", add_loss, reduction)),
         {"hidden": hidden,
          "decoder-bpe": decoder_bpe})
 
@@ -596,13 +597,20 @@ def validate_internally(m):
                     get_steps(set_val_("file", file, m)))))
 
 
-set_validation = partial(set_val_, "split", "validation")
+def validate_externally(m):
+    with open(get_sorted_path(m)) as file:
+        # TODO join string
+        return map(comp(partial(aid.flip(get), "decoder_bpes"),
+                        make_run_validation_step(m)),
+                   get_steps(set_val_("file", file, m)))
 
 
 def validate(m):
     # TODO implement this function
     # TODO turn on eval
-    validate_internally(set_validation(m))
+    validate_internally(set_val_("split", "validation", m))
+    validate_externally(merge(m, {"dataset": "jfleg",
+                                  "split": "validation"}))
     # TODO turn on train
 
 
