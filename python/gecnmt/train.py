@@ -16,6 +16,7 @@ import torchtext.vocab as vocab
 from gecnmt.clojure.core import *
 import gecnmt.clojure.string as string
 import gecnmt.aid as aid
+import gecnmt.helpers as helpers
 
 
 def slurp(path):
@@ -29,8 +30,7 @@ glove = vocab.GloVe("6B", dim)
 vocabulary_size = first(glove.vectors.size())
 embedding_vectors = torch.cat((glove.vectors, torch.zeros(1, glove.dim)))
 bag_size = 128
-dataset_path = "../resources/dataset"
-bpe_path = path.join(dataset_path, "simple/bpe.json")
+bpe_path = path.join(helpers.dataset_path, "simple/bpe.json")
 bpe = json.loads(slurp(bpe_path))
 count = len
 bpe_size = count(bpe)
@@ -117,7 +117,10 @@ def encode(m):
 
 
 def get_sorted_path(m):
-    return path.join(dataset_path, m["dataset"], m["split"], "sorted.txt")
+    return path.join(helpers.dataset_path,
+                     m["dataset"],
+                     m["split"],
+                     "sorted.txt")
 
 
 def reduce(f, *more):
@@ -617,15 +620,8 @@ def infer(m):
                         get_steps(set_val_("file", file, m))))
 
 
-inferred_filename = "inferred.txt"
-
-
-def get_inferred_path(dataset):
-    return path.join(dataset_path, dataset, inferred_filename)
-
-
 def validate_externally(m):
-    spit(get_inferred_path(m["dataset"]), infer(m))
+    spit(helpers.get_inferred_path(m["dataset"]), infer(m))
 
 
 def validate(m):
