@@ -519,15 +519,13 @@ def decode_token(reduction, element):
                                  reduction["model"].attention(
                                      torch.cat(
                                          (decoder_embedding,
-                                          get_hidden(set_val_("encoder",
-                                                              False,
-                                                              reduction))),
+                                          reduction["hidden"]),
                                          2)),
                                  2)),
                          batch_transpose(
                              reduction["padded_embedding"])))),
                     2))),
-        get_hidden(set_val_("encoder", False, reduction)))
+        reduction["hidden"])
     return merge(
         transform_("loss",
                    partial(add,
@@ -541,7 +539,10 @@ def decode_token(reduction, element):
 
 def decode_tokens(m):
     return reduce(decode_token,
-                  set_val_("padded_embedding", pad_embedding(m), m),
+                  merge(m, {"padded_embedding": pad_embedding(m),
+                            "hidden": get_hidden(set_val_("encoder",
+                                                          False,
+                                                          m))}),
                   m["reference_bpes"])
 
 
