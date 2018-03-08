@@ -14,6 +14,7 @@ import torch.optim as optim
 import torchtext.vocab as vocab
 
 from gecnmt.clojure.core import *
+import gecnmt.clojure.string as string
 import gecnmt.aid as aid
 
 
@@ -599,6 +600,10 @@ def validate_internally(m):
 
 
 join = str_join
+
+
+def delete_eos(sentence):
+    return string.replace(sentence, r" ?<EOS>.*", "")
 
 
 def validate_externally(m):
