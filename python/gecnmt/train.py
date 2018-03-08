@@ -623,6 +623,7 @@ def infer(m):
 
 def validate_externally(m):
     spit(helpers.get_inferred_path(m["dataset"]), infer(m))
+    # TODO run sed
     return jfleg.get_score()
 
 
