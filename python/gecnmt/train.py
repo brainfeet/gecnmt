@@ -533,24 +533,34 @@ def decode_token(reduction, element):
         reduction["hidden"])
     log_softmax_output = F.log_softmax(
         reduction["model"].out(first(gru_output)), 1)
+    decoder_bpe = torch.squeeze(second(torch.topk(log_softmax_output, 1)), 1)
     return merge(
-        transform_("loss",
-                   partial(add,
-                           get_nll(log_softmax_output,
-                                   element["output_reference_bpe"])),
-                   reduction),
+        transform_("decoder_bpes",
+                   if_(equal(reduction["dataset"], "simple"),
+                       identity,
+                       partial(aid.flip(str),
+                               # TODO get string
+                               decoder_bpe)),
+                   transform_("loss",
+                              partial(add,
+                                      get_nll(log_softmax_output,
+                                              element[
+                                                  "output_reference_bpe"])),
+                              reduction)),
         {"hidden": hidden,
-         "decoder-bpe": torch.squeeze(second(torch.topk(log_softmax_output, 1)),
-                                      1)})
+         "decoder-bpe": decoder_bpe})
 
 
 def decode_tokens(m):
     return reduce(decode_token,
-                  merge(m, {"hidden": get_hidden(set_val_("encoder",
+                  merge(m, {"decoder_bpes": "",
+                            "hidden": get_hidden(set_val_("encoder",
                                                           False,
                                                           m)),
                             "padded_embedding": pad_embedding(m)}),
-                  m["reference_bpes"])
+                  if_(equal(m["dataset"], "simple"),
+                      m["reference_bpes"],
+                      repeat(m["max_length"], nothing)))
 
 
 class Maybe:
@@ -578,9 +588,14 @@ def make_run_validation_step(m):
 
 def validate_internally(m):
     with open(get_sorted_path(merge(m, {"dataset": "simple"}))) as file:
-        return numpy.mean(tuple((map(comp(partial(aid.flip(get), "loss"),
-                                          make_run_validation_step(m)),
-                                     get_steps(set_val_("file", file, m))))))
+        return numpy.mean(
+            tuple(
+                map(
+                    comp(
+                        partial(aid.flip(get), "loss"),
+                        make_run_validation_step(merge(m,
+                                                       {"dataset": "simple"}))),
+                    get_steps(set_val_("file", file, m)))))
 
 
 def validate(m):
@@ -600,7 +615,8 @@ def learn(m):
     m["model"].zero_grad()
     loss = decode_tokens(merge(m,
                                encode(set_val_("split", "training", m)),
-                               {"split": "training"}))["loss"]
+                               {"dataset": "simple",
+                                "split": "training"}))["loss"]
     loss.backward()
     # TODO print loss
     divide(loss, m["length"])
