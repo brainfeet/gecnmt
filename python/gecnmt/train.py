@@ -577,8 +577,7 @@ def make_run_internal_step(m):
 
 
 def validate_internally(m):
-    with open(get_sorted_path(merge(m,
-                                    {"dataset": "simple"}))) as file:
+    with open(get_sorted_path(merge(m, {"dataset": "simple"}))) as file:
         return numpy.mean(tuple((map(make_run_internal_step(m),
                                      get_steps(set_val_("file", file, m))))))
 
