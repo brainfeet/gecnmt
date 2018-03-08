@@ -282,19 +282,17 @@ def or_(*more):
     return or_(first(more), or_(*rest(more)))
 
 
-preposition_ = partial(contains_, prepositions)
+# TODO check tag_
+preposition_ = comp(partial(contains_, prepositions),
+                    partial(aid.flip(get),
+                            "lower_"))
 remove_tokens = partial(transform_,
                         "tokens",
                         # if tuple isn't called, tokens don't persist
                         compose(tuple,
                                 # TODO make remove persistent
                                 partial(remove,
-                                        build(or_,
-                                              determiner_,
-                                              # TODO check tag_
-                                              comp(preposition_,
-                                                   partial(aid.flip(get),
-                                                           "lower_"))))))
+                                        build(or_, determiner_, preposition_))))
 
 inflecteds = {"BES",
               "HVS",
