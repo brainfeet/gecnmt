@@ -570,15 +570,16 @@ def mod(num, div):
     return num % div
 
 
-def make_run_internal_step(m):
+def make_run_validation_step(m):
     def run_internal_step(step):
-        return decode_tokens(merge(m, step, encode(merge(m, step))))["loss"]
+        return decode_tokens(merge(m, step, encode(merge(m, step))))
     return run_internal_step
 
 
 def validate_internally(m):
     with open(get_sorted_path(merge(m, {"dataset": "simple"}))) as file:
-        return numpy.mean(tuple((map(make_run_internal_step(m),
+        return numpy.mean(tuple((map(comp(partial(aid.flip(get), "loss"),
+                                          make_run_validation_step(m)),
                                      get_steps(set_val_("file", file, m))))))
 
 
