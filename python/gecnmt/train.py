@@ -553,6 +553,19 @@ def decode_tokens(m):
                   m["reference_bpes"])
 
 
+class Maybe:
+    def __init__(self, *more):
+        if equal(count(more), 1):
+            self.v = first(more)
+    def __repr__(self):
+        if hasattr(self, "v"):
+            return str("#<Just ", self.v, ">")
+        return "#<Nothing>"
+
+
+nothing = Maybe()
+
+
 def mod(num, div):
     return num % div
 
