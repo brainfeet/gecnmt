@@ -590,11 +590,10 @@ def validate_internally(m):
     with open(get_sorted_path(merge(m, {"dataset": "simple"}))) as file:
         return numpy.mean(
             tuple(
-                map(
-                    comp(
-                        partial(aid.flip(get), "loss"),
-                        make_run_validation_step(merge(m,
-                                                       {"dataset": "simple"}))),
+                map(comp(
+                    partial(aid.flip(get), "loss"),
+                    make_run_validation_step(merge(m,
+                                                   {"dataset": "simple"}))),
                     get_steps(set_val_("file", file, m)))))
 
 
