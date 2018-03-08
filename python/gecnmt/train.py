@@ -544,8 +544,9 @@ def decode_token(reduction, element):
         transform_("decoder_bpes",
                    if_(equal(reduction["dataset"], "simple"),
                        identity,
-                       partial(aid.flip(str),
-                               bpe[str(first(decoder_bpe.data))])),
+                       partial(set_val_,
+                               END,
+                               (bpe[str(first(decoder_bpe.data))],))),
                    transform_("loss", add_loss, reduction)),
         {"hidden": hidden,
          "decoder-bpe": decoder_bpe})
@@ -553,7 +554,7 @@ def decode_token(reduction, element):
 
 def decode_tokens(m):
     return reduce(decode_token,
-                  merge(m, {"decoder_bpes": "",
+                  merge(m, {"decoder_bpes": (),
                             "hidden": get_hidden(set_val_("encoder",
                                                           False,
                                                           m)),
