@@ -17,6 +17,7 @@ from gecnmt.clojure.core import *
 import gecnmt.clojure.string as string
 import gecnmt.aid as aid
 import gecnmt.helpers as helpers
+import gecnmt.jfleg as jfleg
 
 
 def slurp(path):
@@ -622,6 +623,7 @@ def infer(m):
 
 def validate_externally(m):
     spit(helpers.get_inferred_path(m["dataset"]), infer(m))
+    return jfleg.get_score()
 
 
 def validate(m):

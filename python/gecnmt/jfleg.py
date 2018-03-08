@@ -10,8 +10,11 @@ source = "jfleg/dev/dev.src"
 gleu_calculator = gleu.GLEU(4)
 gleu_calculator.load_sources(source)
 gleu_calculator.load_references(glob.glob("jfleg/dev/*ref*"))
-read_string(first(first(gleu_calculator.run_iterations(
-    num_iterations=500,
-    source=source,
-    hypothesis=helpers.get_inferred_path("jfleg"),
-    per_sent=False))))
+
+
+def get_score():
+    return read_string(first(first(gleu_calculator.run_iterations(
+        num_iterations=500,
+        source=source,
+        hypothesis=helpers.get_inferred_path("jfleg"),
+        per_sent=False))))
