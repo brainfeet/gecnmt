@@ -1,10 +1,10 @@
 import argparse
 import json
-import re
 
 import spacy
 
-from gecnmt.clojure import *
+from gecnmt.clojure.core import *
+import gecnmt.clojure.string as string
 import gecnmt.aid as aid
 
 nlp = spacy.load("en")
@@ -30,12 +30,8 @@ parse_stringify = comp(json.dumps,
                        nlp)
 
 
-def replace(s, match, replacement):
-    return re.sub(match, replacement, s)
-
-
 def get_parsed_path(path):
-    return replace(path, "combined.txt", "parsed.txt")
+    return string.replace(path, "combined.txt", "parsed.txt")
 
 
 def spit(f, content, append=False):

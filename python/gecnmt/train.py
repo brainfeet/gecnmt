@@ -13,7 +13,7 @@ import torch.nn.utils.rnn as rnn
 import torch.optim as optim
 import torchtext.vocab as vocab
 
-from gecnmt.clojure import *
+from gecnmt.clojure.core import *
 import gecnmt.aid as aid
 
 
