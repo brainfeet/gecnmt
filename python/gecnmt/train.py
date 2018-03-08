@@ -608,7 +608,6 @@ def delete_eos(sentence):
 
 def validate_externally(m):
     with open(get_sorted_path(m)) as file:
-        # TODO join string
         return map(comp(delete_eos,
                         partial(join, " "),
                         partial(aid.flip(get), "decoder_bpes"),
@@ -619,10 +618,11 @@ def validate_externally(m):
 def validate(m):
     # TODO implement this function
     m["model"].eval()
-    validate_internally(set_val_("split", "validation", m))
-    validate_externally(merge(m, {"dataset": "jfleg",
-                                  "split": "validation"}))
+    result = {"simple": validate_internally(set_val_("split", "validation", m)),
+              "jfleg": validate_externally(merge(m, {"dataset": "jfleg",
+                                                     "split": "validation"}))}
     m["model"].train()
+    return result
 
 
 def divide(*more):
