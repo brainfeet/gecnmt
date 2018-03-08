@@ -1,6 +1,7 @@
 import functools
 import json
 import os.path as path
+import subprocess
 
 import funcy
 import numpy
@@ -613,8 +614,8 @@ def delete_eos(sentence):
 
 def infer(m):
     with open(get_sorted_path(m)) as file:
-        return join("\n",
-                    map(comp(delete_eos,
+        return join(map(comp(partial(aid.flip(str), "\n"),
+                             delete_eos,
                              partial(join, " "),
                              partial(aid.flip(get), "decoder_bpes"),
                              make_run_validation_step(m)),
@@ -624,6 +625,8 @@ def infer(m):
 def validate_externally(m):
     spit(helpers.get_inferred_path(m["dataset"]), infer(m))
     # TODO run sed
+    subprocess.call(["sed", "-r", "s/(@@ )|(@@ ?$)//g",
+                     helpers.get_inferred_path(m["dataset"])])
     return jfleg.get_score()
 
 
