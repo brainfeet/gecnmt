@@ -609,7 +609,8 @@ def delete_eos(sentence):
 def validate_externally(m):
     with open(get_sorted_path(m)) as file:
         # TODO join string
-        return map(comp(partial(join, " "),
+        return map(comp(delete_eos,
+                        partial(join, " "),
                         partial(aid.flip(get), "decoder_bpes"),
                         make_run_validation_step(m)),
                    get_steps(set_val_("file", file, m)))
