@@ -505,9 +505,9 @@ get_nll = nn.NLLLoss()
 
 
 def decode_token(reduction, element):
-    decoder_embedding = reduction["model"].embedding(
+    decoder_embedding = torch.unsqueeze(reduction["model"].embedding(
         # TODO don't use input_reference_bpe for validation
-        element["input_reference_bpe"]).unsqueeze(0)
+        element["input_reference_bpe"]), 0)
     gru_output, hidden = reduction["model"].decoder_gru(
         F.relu(
             reduction["model"].attention_combiner(
@@ -535,7 +535,9 @@ def decode_token(reduction, element):
                                    element["output_reference_bpe"])),
                    reduction),
         # TODO add decoder_bpe
-        {"hidden": hidden})
+        {"hidden": hidden,
+         "decoder_bpe": torch.squeeze(second(torch.topk(log_softmax_output, 1)),
+                                      1)})
 
 
 def decode_tokens(m):
