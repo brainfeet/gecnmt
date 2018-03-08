@@ -506,7 +506,7 @@ get_cross_entropy = nn.CrossEntropyLoss()
 
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
-        # TODO don't use reference_bpes for validation
+        # TODO don't use input_reference_bpe for validation
         element["input_reference_bpe"]).unsqueeze(0)
     output, hidden = reduction["model"].decoder_gru(
         F.relu(
@@ -528,20 +528,20 @@ def decode_token(reduction, element):
                              reduction["padded_embedding"])))),
                     2))),
         get_hidden(set_val_("encoder", False, reduction)))
-    # TODO add decoder_bpes
-    return transform_(
-        "loss",
-        partial(add,
-                get_cross_entropy(reduction["model"].out(output).squeeze(0),
-                                  element["output_reference_bpe"])),
-        reduction)
+    return merge(
+        transform_("loss",
+                   partial(add,
+                           get_cross_entropy(
+                               reduction["model"].out(output).squeeze(0),
+                               element["output_reference_bpe"])),
+                   reduction),
+        # TODO add decoder_bpe
+        {"hidden": hidden})
 
 
 def decode_tokens(m):
-    # TODO add decoder_bpes
     return reduce(decode_token,
                   set_val_("padded_embedding", pad_embedding(m), m),
-                  # TODO don't use reference_bpes for validation
                   m["reference_bpes"])
 
 
