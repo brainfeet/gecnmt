@@ -282,10 +282,13 @@ def or_(*more):
     return or_(first(more), or_(*rest(more)))
 
 
-# TODO check tag_
-preposition_ = comp(partial(contains_, prepositions),
-                    partial(aid.flip(get),
-                            "lower_"))
+preposition_ = build(and_,
+                     comp(partial(equal, "IN"),
+                          partial(aid.flip(get),
+                                  "tag_")),
+                     comp(partial(contains_, prepositions),
+                          partial(aid.flip(get),
+                                  "lower_")))
 remove_tokens = partial(transform_,
                         "tokens",
                         # if tuple isn't called, tokens don't persist
