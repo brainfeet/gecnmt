@@ -622,11 +622,16 @@ def infer(m):
                         get_steps(set_val_("file", file, m))))
 
 
+def get_inferred_path(dataset):
+    return path.join(helpers.dataset_path, dataset, "inferred.txt")
+
+
 def validate_externally(m):
-    spit(helpers.get_inferred_path(m["dataset"]), infer(m))
-    # TODO run sed
-    subprocess.call(["sed", "-r", "s/(@@ )|(@@ ?$)//g",
-                     helpers.get_inferred_path(m["dataset"])])
+    spit(get_inferred_path(m["dataset"]), infer(m))
+    with open(get_inferred_path(m["dataset"]), "w") as file:
+        subprocess.Popen(["sed", "-r", "s/(@@ )|(@@ ?$)//g",
+                          get_inferred_path(m["dataset"])],
+                         stdout=file)
     return jfleg.get_score()
 
 

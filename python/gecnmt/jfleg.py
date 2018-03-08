@@ -16,5 +16,5 @@ def get_score():
     return read_string(first(first(gleu_calculator.run_iterations(
         num_iterations=500,
         source=source,
-        hypothesis=helpers.get_inferred_path("jfleg"),
+        hypothesis=helpers.get_replaced_path("jfleg"),
         per_sent=False))))
