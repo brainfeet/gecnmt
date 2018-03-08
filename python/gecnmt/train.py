@@ -586,7 +586,7 @@ def validate_internally(m):
 def validate(m):
     # TODO implement this function
     # TODO turn on eval
-    validate_internally(set_val_("split", "validation", m))
+    validate_internally(m)
     # TODO turn on train
 
 
@@ -612,7 +612,7 @@ def run_training_step(reduction, step):
     learn(merge(reduction, step))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
-        validate(reduction)
+        validate(set_val_("split", "validation", reduction))
     return transform_("step_count", inc, reduction)
 
 
