@@ -598,10 +598,13 @@ def validate_internally(m):
                     get_steps(set_val_("file", file, m)))))
 
 
+set_validation = partial(set_val_, "split", "validation")
+
+
 def validate(m):
     # TODO implement this function
     # TODO turn on eval
-    validate_internally(m)
+    validate_internally(set_validation(m))
     # TODO turn on train
 
 
@@ -628,8 +631,7 @@ def run_training_step(reduction, step):
     learn(merge(reduction, step))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
-        # TODO set split within validation
-        validate(set_val_("split", "validation", reduction))
+        validate(reduction)
     return transform_("step_count", inc, reduction)
 
 
