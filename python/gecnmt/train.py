@@ -221,7 +221,9 @@ def contains_(coll, k):
     return k in coll
 
 
-determiner_ = partial(equal, "DT")
+determiner_ = comp(partial(equal, "DT"),
+                   partial(aid.flip(get),
+                           "tag_"))
 prepositions = {"with",
                 "at",
                 "from",
@@ -288,9 +290,7 @@ remove_tokens = partial(transform_,
                                 # TODO make remove persistent
                                 partial(remove,
                                         build(or_,
-                                              comp(determiner_,
-                                                   partial(aid.flip(get),
-                                                           "tag_")),
+                                              determiner_,
                                               # TODO check tag_
                                               comp(preposition_,
                                                    partial(aid.flip(get),
