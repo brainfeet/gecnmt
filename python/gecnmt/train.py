@@ -598,10 +598,14 @@ def validate_internally(m):
                     get_steps(set_val_("file", file, m)))))
 
 
+join = str_join
+
+
 def validate_externally(m):
     with open(get_sorted_path(m)) as file:
         # TODO join string
-        return map(comp(partial(aid.flip(get), "decoder_bpes"),
+        return map(comp(partial(join, " "),
+                        partial(aid.flip(get), "decoder_bpes"),
                         make_run_validation_step(m)),
                    get_steps(set_val_("file", file, m)))
 
