@@ -540,7 +540,6 @@ def decode_token(reduction, element):
                            get_nll(log_softmax_output,
                                    element["output_reference_bpe"])),
                    reduction),
-        # TODO add decoder-bpe
         {"hidden": hidden,
          "decoder-bpe": torch.squeeze(second(torch.topk(log_softmax_output, 1)),
                                       1)})
