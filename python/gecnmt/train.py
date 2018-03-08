@@ -539,8 +539,7 @@ def decode_token(reduction, element):
                    if_(equal(reduction["dataset"], "simple"),
                        identity,
                        partial(aid.flip(str),
-                               # TODO get string
-                               decoder_bpe)),
+                               bpe[str(first(decoder_bpe.data))])),
                    transform_("loss",
                               partial(add,
                                       get_nll(log_softmax_output,
