@@ -33,3 +33,10 @@ def get_items(coll):
 
 def map(f, *colls):
     return builtins.map(f, *builtins.map(get_items, colls))
+
+
+def spit(f, content, append=False):
+    with open(f, if_(append,
+                     "a",
+                     "w")) as file:
+        file.write(content)

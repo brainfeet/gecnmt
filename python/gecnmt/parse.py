@@ -34,13 +34,6 @@ def get_parsed_path(path):
     return string.replace(path, "combined.txt", "parsed.txt")
 
 
-def spit(f, content, append=False):
-    with open(f, if_(append,
-                     "a",
-                     "w")) as file:
-        file.write(content)
-
-
 def appending_spit(f, content):
     spit(f, content, append=True)
 

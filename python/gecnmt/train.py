@@ -606,7 +606,7 @@ def delete_eos(sentence):
     return string.replace(sentence, r" ?<EOS>.*", "")
 
 
-def validate_externally(m):
+def infer(m):
     with open(get_sorted_path(m)) as file:
         return join("\n",
                     map(comp(delete_eos,
@@ -614,6 +614,17 @@ def validate_externally(m):
                              partial(aid.flip(get), "decoder_bpes"),
                              make_run_validation_step(m)),
                         get_steps(set_val_("file", file, m))))
+
+
+inferred_filename = "inferred.txt"
+
+
+def get_inferred_path(dataset):
+    return path.join(dataset_path, dataset, inferred_filename)
+
+
+def validate_externally(m):
+    spit(get_inferred_path(m["dataset"]), infer(m))
 
 
 def validate(m):
