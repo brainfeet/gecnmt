@@ -612,6 +612,7 @@ def run_training_step(reduction, step):
     learn(merge(reduction, step))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
+        # TODO set split within validation
         validate(set_val_("split", "validation", reduction))
     return transform_("step_count", inc, reduction)
 
