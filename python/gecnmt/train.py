@@ -523,10 +523,9 @@ def decode_token(reduction, element):
                          batch_transpose(
                              F.softmax(
                                  reduction["model"].attention(
-                                     torch.cat(
-                                         (decoder_embedding,
-                                          reduction["hidden"]),
-                                         2)),
+                                     torch.cat((decoder_embedding,
+                                                reduction["hidden"]),
+                                               2)),
                                  2)),
                          batch_transpose(
                              reduction["padded_embedding"])))),
