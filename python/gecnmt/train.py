@@ -618,11 +618,11 @@ def validate_externally(m):
 
 def validate(m):
     # TODO implement this function
-    # TODO turn on eval
+    m["model"].eval()
     validate_internally(set_val_("split", "validation", m))
     validate_externally(merge(m, {"dataset": "jfleg",
                                   "split": "validation"}))
-    # TODO turn on train
+    m["model"].train()
 
 
 def divide(*more):
