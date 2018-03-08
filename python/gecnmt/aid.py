@@ -1,4 +1,4 @@
-from gecnmt.clojure import *
+from gecnmt.clojure.core import *
 
 
 def flip(f):

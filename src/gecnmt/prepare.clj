@@ -79,6 +79,7 @@
 (def parse-keywordize
   (partial (aid/flip parse-string) true))
 
+;TODO rename this function as ascii?
 (def is-ascii?
   (partial every? (comp (partial > 128)
                         int)))
@@ -132,7 +133,7 @@
                                                         (partial str/join " ")))
                                      (partial s/transform* [s/ALL s/ALL] :text)
                                      (partial map read-string))
-                       :input  "split.txt"
+                       :input  "random.txt"
                        :output "text.txt"}))
 
 (defn learn-bpe
@@ -169,7 +170,7 @@
                         {(+ 2 index) word}))
          (apply merge {0 "<SOS>"
                        1 "<EOS>"})
-         ((juxt (comp (partial spit (get-dataset-path dataset "word.json"))
+         ((juxt (comp (partial spit (get-dataset-path dataset "bpe.json"))
                       generate-string)
                 (comp (partial spit (get-dataset-path dataset "index.edn"))
                       set/map-invert))))))
@@ -180,19 +181,16 @@
        (map (comp (partial map index)
                   (partial (aid/flip str/split) #" ")))
        (map (fn [tokens bpes]
-              {:bpe-length   (count bpes)
-               :input-bpes   (->> bpes
-                                  (s/setval s/BEGINNING [0])
-                                  drop-last)
-               :output-bpes  bpes
-               :tokens       tokens
-               :token-length (count tokens)})
+              {:decoder-bpe           0
+               :length                (count bpes)
+               :input-reference-bpes  (s/setval s/BEGINNING [0] bpes)
+               :output-reference-bpes (s/setval s/END [1] bpes)
+               :tokens                tokens})
             (map read-string random))))
 
 (def get-count-filename
-  (comp (partial str/join ".")
-        (juxt :bpe-length
-              :token-length)))
+  (comp str
+        :length))
 
 (defn make-get-filename-content
   [dataset split]
@@ -210,7 +208,6 @@
                               ["validation" "training"])
                          (split-at (first more) coll)))
           (map (make-get-filename-content dataset "validation") coll))))
-
 
 (defn split-dataset
   [dataset & more]
@@ -237,11 +234,10 @@
 
 (defn get-source-targets*
   [dataset split]
-  (->> #"\d+.+"
+  (->> #"\d+"
        (fs/find-files (get-dataset-path dataset split))
        (sort-by (comp read-string
-                      fs/name)
-                >)
+                      fs/name))
        (map get-source-target)))
 
 (defn get-source-targets
@@ -266,6 +262,7 @@
         get-source-targets))
 
 (defn mung
+  ;TODO take num_operations as an argument
   [dataset & more]
   (aid/mlet [_ (if (= dataset "simple")
                  (aid/mlet [_ (extract)]

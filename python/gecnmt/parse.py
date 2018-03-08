@@ -1,11 +1,10 @@
 import argparse
-import builtins
 import json
-import re
 
 import spacy
 
-from gecnmt.clojure import *
+from gecnmt.clojure.core import *
+import gecnmt.clojure.string as string
 import gecnmt.aid as aid
 
 nlp = spacy.load("en")
@@ -25,33 +24,18 @@ def get_token_map(token):
             "text": token.text}
 
 
-parse_stringify = compose(json.dumps,
-                          tuple,
-                          partial(map, get_token_map),
-                          nlp)
-
-
-def replace(s, match, replacement):
-    return re.sub(match, replacement, s)
+parse_stringify = comp(json.dumps,
+                       tuple,
+                       partial(map, get_token_map),
+                       nlp)
 
 
 def get_parsed_path(path):
-    return replace(path, "combined.txt", "parsed.txt")
-
-
-def spit(f, content, append=False):
-    with open(f, if_(append,
-                     "a",
-                     "w")) as file:
-        file.write(content)
+    return string.replace(path, "combined.txt", "parsed.txt")
 
 
 def appending_spit(f, content):
     spit(f, content, append=True)
-
-
-def str(*more):
-    return str_join("", walk(builtins.str, more))
 
 
 append_newline = partial(aid.flip(str), "\n")
@@ -62,15 +46,15 @@ def dorun(coll):
         pass
 
 
-run_ = compose(dorun, map)
+run_ = comp(dorun, map)
 
 
 def parse():
     with open(get_combined_path()) as f:
-        return run_(compose(partial(appending_spit,
-                                    get_parsed_path(get_combined_path())),
-                            append_newline,
-                            parse_stringify),
+        return run_(comp(partial(appending_spit,
+                                 get_parsed_path(get_combined_path())),
+                         append_newline,
+                         parse_stringify),
                     line_seq(f))
 
 
