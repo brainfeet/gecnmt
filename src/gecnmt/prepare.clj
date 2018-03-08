@@ -181,7 +181,8 @@
        (map (comp (partial map index)
                   (partial (aid/flip str/split) #" ")))
        (map (fn [tokens bpes]
-              {:length                (count bpes)
+              {:decoder-bpe           0
+               :length                (count bpes)
                :input-reference-bpes  (s/setval s/BEGINNING [0] bpes)
                :output-reference-bpes (s/setval s/END [1] bpes)
                :tokens                tokens})

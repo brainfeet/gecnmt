@@ -420,6 +420,8 @@ pad_step = apply(comp,
 
 
 def batch_transpose(input):
+    if equal(input.dim(), 1):
+        return input
     return torch.transpose(input, 0, 1)
 
 
@@ -452,7 +454,8 @@ convert_to_variables = comp(pair,
                                                "pretrained_embedding",
                                                "embedded",
                                                "input-reference-bpes",
-                                               "output-reference-bpes"),
+                                               "output-reference-bpes",
+                                               "decoder-bpe"),
                                     get_variable),
                             partial(transform_,
                                     multi_path("bag", "embedded"),
@@ -460,7 +463,8 @@ convert_to_variables = comp(pair,
                             partial(transform_,
                                     multi_path("pretrained_embedding",
                                                "input-reference-bpes",
-                                               "output-reference-bpes"),
+                                               "output-reference-bpes",
+                                               "decoder-bpe"),
                                     torch.LongTensor),
                             pad_step)
 
@@ -506,8 +510,10 @@ get_nll = nn.NLLLoss()
 
 def decode_token(reduction, element):
     decoder_embedding = torch.unsqueeze(reduction["model"].embedding(
-        # TODO don't use input_reference_bpe for validation
-        element["input_reference_bpe"]), 0)
+        if_(equal(reduction["split"], "training"),
+            element["input_reference_bpe"],
+            reduction["decoder-bpe"])),
+        0)
     gru_output, hidden = reduction["model"].decoder_gru(
         F.relu(
             reduction["model"].attention_combiner(
@@ -534,18 +540,18 @@ def decode_token(reduction, element):
                            get_nll(log_softmax_output,
                                    element["output_reference_bpe"])),
                    reduction),
-        # TODO add decoder_bpe
+        # TODO add decoder-bpe
         {"hidden": hidden,
-         "decoder_bpe": torch.squeeze(second(torch.topk(log_softmax_output, 1)),
+         "decoder-bpe": torch.squeeze(second(torch.topk(log_softmax_output, 1)),
                                       1)})
 
 
 def decode_tokens(m):
     return reduce(decode_token,
-                  merge(m, {"padded_embedding": pad_embedding(m),
-                            "hidden": get_hidden(set_val_("encoder",
+                  merge(m, {"hidden": get_hidden(set_val_("encoder",
                                                           False,
-                                                          m))}),
+                                                          m)),
+                            "padded_embedding": pad_embedding(m)}),
                   m["reference_bpes"])
 
 
