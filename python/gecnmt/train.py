@@ -511,21 +511,22 @@ def decode_token(reduction, element):
     output, hidden = reduction["model"].decoder_gru(
         F.relu(
             reduction["model"].attention_combiner(
-                torch.cat((decoder_embedding,
-                           batch_transpose(torch.bmm(
-                               batch_transpose(
-                                   F.softmax(
-                                       reduction["model"].attention(
-                                           torch.cat(
-                                               (decoder_embedding,
-                                                get_hidden(set_val_("encoder",
-                                                                    False,
-                                                                    reduction))),
-                                               2)),
-                                       2)),
-                               batch_transpose(
-                                   reduction["padded_embedding"])))),
-                          2))),
+                torch.cat(
+                    (decoder_embedding,
+                     batch_transpose(torch.bmm(
+                         batch_transpose(
+                             F.softmax(
+                                 reduction["model"].attention(
+                                     torch.cat(
+                                         (decoder_embedding,
+                                          get_hidden(set_val_("encoder",
+                                                              False,
+                                                              reduction))),
+                                         2)),
+                                 2)),
+                         batch_transpose(
+                             reduction["padded_embedding"])))),
+                    2))),
         get_hidden(set_val_("encoder", False, reduction)))
     # TODO add decoder_bpes
     return transform_(
