@@ -182,10 +182,8 @@
                   (partial (aid/flip str/split) #" ")))
        (map (fn [tokens bpes]
               {:length                (count bpes)
-               :input-reference-bpes  (->> bpes
-                                           (s/setval s/BEGINNING [0])
-                                           drop-last)
-               :output-reference-bpes bpes
+               :input-reference-bpes  (s/setval s/BEGINNING [0] bpes)
+               :output-reference-bpes (s/setval s/END [1] bpes)
                :tokens                tokens})
             (map read-string random))))
 
