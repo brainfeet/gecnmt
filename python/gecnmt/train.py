@@ -501,14 +501,14 @@ def pad_embedding(m):
                                      m["encoder_embedding"].size())))))
 
 
-get_cross_entropy = nn.CrossEntropyLoss()
+get_nll = nn.NLLLoss()
 
 
 def decode_token(reduction, element):
     decoder_embedding = reduction["model"].embedding(
         # TODO don't use input_reference_bpe for validation
         element["input_reference_bpe"]).unsqueeze(0)
-    output, hidden = reduction["model"].decoder_gru(
+    gru_output, hidden = reduction["model"].decoder_gru(
         F.relu(
             reduction["model"].attention_combiner(
                 torch.cat(
@@ -526,12 +526,13 @@ def decode_token(reduction, element):
                              reduction["padded_embedding"])))),
                     2))),
         reduction["hidden"])
+    log_softmax_output = F.log_softmax(
+        reduction["model"].out(first(gru_output)), 1)
     return merge(
         transform_("loss",
                    partial(add,
-                           get_cross_entropy(
-                               first(reduction["model"].out(output)),
-                               element["output_reference_bpe"])),
+                           get_nll(log_softmax_output,
+                                   element["output_reference_bpe"])),
                    reduction),
         # TODO add decoder_bpe
         {"hidden": hidden})
