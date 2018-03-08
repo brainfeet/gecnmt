@@ -530,7 +530,7 @@ def decode_token(reduction, element):
         transform_("loss",
                    partial(add,
                            get_cross_entropy(
-                               reduction["model"].out(output).squeeze(0),
+                               first(reduction["model"].out(output)),
                                element["output_reference_bpe"])),
                    reduction),
         # TODO add decoder_bpe
