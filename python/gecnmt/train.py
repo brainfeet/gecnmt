@@ -682,8 +682,7 @@ min = comp(builtins.min,
 
 def run_training_step(reduction, step):
     learn(merge(reduction, step))
-    if equal(mod(reduction["step_count"], reduction["validation_interval"]),
-             0):
+    if equal(mod(reduction["step_count"], reduction["validation_interval"]), 0):
         validated = validate(reduction)
     else:
         validated = {}
