@@ -376,7 +376,6 @@ get_embedded = comp(tuple,
                                       partial(contains_, glove_words),
                                       partial(aid.flip(get),
                                               "lower_"))))
-# TODO implement this function
 convert_from_tokens = comp(
     apply(comp,
           map(make_set,
