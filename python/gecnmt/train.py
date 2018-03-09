@@ -674,7 +674,6 @@ def select_keys(m, ks):
 
 max = comp(builtins.max,
            vector)
-
 min = comp(builtins.min,
            vector)
 
