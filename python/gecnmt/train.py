@@ -673,11 +673,18 @@ def select_keys(m, ks):
     return funcy.select_keys(partial(contains_, ks), m)
 
 
+max = comp(builtins.max,
+           vector)
+
+min = comp(builtins.min,
+           vector)
+
+
 def run_training_step(reduction, step):
     learn(merge(reduction, step))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
-        validate(reduction)
+        validated = validate(reduction)
     return transform_("step_count", inc, reduction)
 
 
