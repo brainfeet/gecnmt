@@ -717,12 +717,10 @@ def make_compare_save(before, after):
 
 def save(before, after):
     # TODO implement this function
-    run_(make_compare_save(before,
-                           after),
-         ({"checkpoint": "simple",
-           "comparator": greater_than},
-          {"checkpoint": "jfleg",
-           "comparator": less_than}))
+    run_(make_compare_save(before, after), ({"checkpoint": "simple",
+                                             "comparator": greater_than},
+                                            {"checkpoint": "jfleg",
+                                             "comparator": less_than}))
 
 
 def run_training_step(reduction, step):
