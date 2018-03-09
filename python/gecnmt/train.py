@@ -617,10 +617,13 @@ def validate_internally(m):
             tuple(
                 map(comp(
                     get_first_data,
-                    partial(aid.flip(get), "loss"),
+                    partial(aid.flip(get),
+                            "loss"),
                     make_run_validation_step(merge(m,
                                                    {"dataset": "simple"}))),
-                    get_steps(set_val_("file", file, m)))))
+                    get_steps(set_val_("file",
+                                       file,
+                                       m)))))
 
 
 join = str_join
