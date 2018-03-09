@@ -4,6 +4,7 @@ import os.path as path
 import subprocess
 
 import funcy
+import math
 import numpy
 import torch
 import torch.autograd as autograd
@@ -691,7 +692,8 @@ def less_than(x, y):
 def make_compare_save(before, after):
     def compare_save(m):
         # TODO implement this function
-        get_checkpoint_path(m["checkpoint"])
+        if m["comparator"](before[m["checkpoint"]], after[m["checkpoint"]]):
+            get_checkpoint_path(m["checkpoint"])
     return compare_save
 
 
@@ -731,6 +733,7 @@ def initialize(m):
 get_optimizer = comp(optim.Adam,
                      partial(filter,
                              partial(aid.flip(getattr), "requires_grad")))
+POSITIVE_INFINITY = math.inf
 
 
 def load(m):
@@ -738,7 +741,9 @@ def load(m):
     model = initialize(set_val_("model", get_model(m), m))
     return merge(m, {"model": model,
                      "optimizer": get_optimizer(model.parameters()),
-                     "step_count": 0})
+                     "step_count": 0,
+                     "simple": POSITIVE_INFINITY,
+                     "jfleg": 0})
 
 
 def train():
