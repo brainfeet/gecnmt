@@ -8,6 +8,7 @@ import math
 import numpy
 import torch
 import torch.autograd as autograd
+import torch.cuda as cuda
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
@@ -32,7 +33,16 @@ dim = 50
 glove = vocab.GloVe("6B", dim)
 count = len
 vocabulary_size = count(glove.vectors)
-embedding_vectors = torch.cat((glove.vectors, torch.zeros(1, glove.dim)))
+
+
+def get_cuda(x):
+    if torch.cuda.is_available():
+        return x.cuda()
+    return x
+
+
+embedding_vectors = get_cuda(torch.cat((glove.vectors,
+                                        torch.zeros(1, glove.dim))))
 bag_size = 128
 bpe_path = path.join(helpers.dataset_path, "simple/bpe.json")
 bpe = json.loads(slurp(bpe_path))
@@ -85,23 +95,23 @@ def get_model(m):
         m["hidden_size"])
     model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
     model.out = nn.Linear(m["hidden_size"], bpe_size)
-    return model
+    return get_cuda(model)
 
 
 get_bidirectional_size = partial(multiply, 2)
 
 
 def get_hidden(m):
-    return autograd.Variable(if_(m["encoder"],
-                                 init.kaiming_normal,
-                                 identity)(
-        torch.zeros(if_(m["encoder"],
-                        get_bidirectional_size,
-                        identity)(m["num_layers"]),
-                    if_(equal(m["split"], "training"),
-                        m["batch_size"],
-                        1),
-                    m["hidden_size"])))
+    return get_cuda_variable(
+        if_(m["encoder"],
+            init.kaiming_normal,
+            identity)(torch.zeros(if_(m["encoder"],
+                                      get_bidirectional_size,
+                                      identity)(m["num_layers"]),
+                                  if_(equal(m["split"], "training"),
+                                      m["batch_size"],
+                                      1),
+                                  m["hidden_size"])))
 
 
 get_mse = nn.MSELoss()
@@ -446,10 +456,12 @@ def pair(m):
                     m)
 
 
-get_variable = comp(batch_transpose,
-                    autograd.Variable)
-embedding = nn.Embedding(count(embedding_vectors),
-                         count(first(embedding_vectors)))
+get_cuda_variable = comp(get_cuda,
+                         autograd.Variable)
+get_transposed_variable = comp(batch_transpose,
+                               get_cuda_variable)
+embedding = get_cuda(nn.Embedding(count(embedding_vectors),
+                                  count(first(embedding_vectors))))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
 convert_to_variables = comp(pair,
@@ -464,7 +476,7 @@ convert_to_variables = comp(pair,
                                                "input-reference-bpes",
                                                "output-reference-bpes",
                                                "decoder-bpe"),
-                                    get_variable),
+                                    get_transposed_variable),
                             partial(transform_,
                                     multi_path("bag", "embedded"),
                                     torch.FloatTensor),
@@ -506,7 +518,7 @@ def pad_embedding(m):
         return m["encoder_embedding"]
     return torch.cat(
         (m["encoder_embedding"],
-         autograd.Variable(
+         get_cuda_variable(
              torch.zeros(*transform_(FIRST,
                                      partial(subtract,
                                              m["max_length"]),
@@ -725,14 +737,6 @@ def run_training_step(reduction, step):
     return after
 
 
-def initialize(m):
-    m["model"].encoder_linear.weight = nn.Parameter(
-        init.kaiming_normal(
-            torch.zeros(dim, get_bidirectional_size(m["hidden_size"]))))
-    # TODO initialize the decoder
-    return m["model"]
-
-
 get_optimizer = comp(optim.Adam,
                      partial(filter,
                              partial(aid.flip(getattr), "requires_grad")))
@@ -741,7 +745,7 @@ POSITIVE_INFINITY = math.inf
 
 def load(m):
     # TODO implement this function
-    model = initialize(set_val_("model", get_model(m), m))
+    model = get_model(m)
     return merge(m, {"model": model,
                      "optimizer": get_optimizer(model.parameters()),
                      "step_count": 0,
