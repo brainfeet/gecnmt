@@ -79,8 +79,7 @@
 (def parse-keywordize
   (partial (aid/flip parse-string) true))
 
-;TODO rename this function as ascii?
-(def is-ascii?
+(def ascii?
   (partial every? (comp (partial > 128)
                         int)))
 
@@ -93,7 +92,7 @@
                        vec
                        (partial filter
                                 (comp (aid/build and
-                                                 is-ascii?
+                                                 ascii?
                                                  (complement has-newline?)
                                                  (complement str/blank?))
                                       :text))
