@@ -15,4 +15,4 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
   :auto {"rsync" {:paths        ["."]
-                  :file-pattern #"\.(clj|json|py)$"}})
+                  :file-pattern #"\.(clj|edn|json|py)$"}})
