@@ -143,3 +143,5 @@ ENV/
 ### gecnmt
 hyperparameter/hyperparameter.json
 .vector_cache
+checkpoints/*
+!.gitkeep

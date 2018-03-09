@@ -56,5 +56,5 @@ crashlytics-build.properties
 fabric.properties
 
 ### gecnmt
-resources/dataset
+resources/dataset/*
 !.gitkeep
