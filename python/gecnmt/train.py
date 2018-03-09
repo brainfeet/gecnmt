@@ -515,6 +515,10 @@ def pad_embedding(m):
 get_nll = nn.NLLLoss()
 
 
+def get_first_data(variable):
+    return first(variable.data)
+
+
 def decode_token(reduction, element):
     if equal(reduction["split"], "training"):
         input_bpe = element["input_reference_bpe"]
@@ -553,7 +557,7 @@ def decode_token(reduction, element):
                        identity,
                        partial(set_val_,
                                END,
-                               (bpe[str(first(decoder_bpe.data))],))),
+                               (bpe[str(get_first_data(decoder_bpe))],))),
                    transform_("loss", add_loss, reduction)),
         {"hidden": hidden,
          "decoder-bpe": decoder_bpe})
@@ -599,6 +603,7 @@ def validate_internally(m):
         return numpy.mean(
             tuple(
                 map(comp(
+                    get_first_data,
                     partial(aid.flip(get), "loss"),
                     make_run_validation_step(merge(m,
                                                    {"dataset": "simple"}))),
