@@ -685,7 +685,11 @@ def run_training_step(reduction, step):
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
              0):
         validated = validate(reduction)
-    return transform_("step_count", inc, reduction)
+    else:
+        validated = {}
+    return merge_with(min,
+                      transform_("step_count", inc, reduction),
+                      select_keys(validated, ("simple",)))
 
 
 def initialize(m):
