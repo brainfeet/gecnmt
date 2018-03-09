@@ -502,7 +502,7 @@ def get_steps(m):
 
 
 def pad_embedding(m):
-    if equal(first(m["encoder_embedding"].size()), m["max_length"]):
+    if equal(count(m["encoder_embedding"]), m["max_length"]):
         return m["encoder_embedding"]
     return torch.cat(
         (m["encoder_embedding"],
