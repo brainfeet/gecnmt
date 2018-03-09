@@ -684,9 +684,25 @@ def get_checkpoint_path(s):
     return path.join("checkpoints", str(s, ".pth.tar"))
 
 
-def save(m):
+def less_than(x, y):
+    return x < y
+
+
+def make_compare_save(before, after):
+    def compare_save(m):
+        # TODO implement this function
+        get_checkpoint_path(m["checkpoint"])
+    return compare_save
+
+
+def save(before, after):
     # TODO implement this function
-    return get_checkpoint_path(m["checkpoint"])
+    run_(make_compare_save(before,
+                           after),
+         ({"checkpoint": "simple",
+           "comparator": greater_than},
+          {"checkpoint": "jfleg",
+           "comparator": less_than}))
 
 
 def run_training_step(reduction, step):
@@ -695,11 +711,13 @@ def run_training_step(reduction, step):
         validated = validate(reduction)
     else:
         validated = {}
-    return merge_with(max,
-                      merge_with(min,
-                                 transform_("step_count", inc, reduction),
-                                 select_keys(validated, ("simple",))),
-                      select_keys(validated, ("jfleg", "nucle")))
+    after = merge_with(max,
+                       merge_with(min,
+                                  transform_("step_count", inc, reduction),
+                                  select_keys(validated, ("simple",))),
+                       select_keys(validated, ("jfleg", "nucle")))
+    save(reduction, after)
+    return after
 
 
 def initialize(m):

@@ -41,14 +41,6 @@ def appending_spit(f, content):
 append_newline = partial(aid.flip(str), "\n")
 
 
-def dorun(coll):
-    for _ in coll:
-        pass
-
-
-run_ = comp(dorun, map)
-
-
 def parse():
     with open(get_combined_path()) as f:
         return run_(comp(partial(appending_spit,
