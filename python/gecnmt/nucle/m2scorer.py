@@ -31,10 +31,10 @@
 #
 
 import os, sys
-import m2scorer.levenshtein as levenshtein
+import gecnmt.nucle.levenshtein as levenshtein
 from getopt import getopt
-from m2scorer.util import paragraphs
-from m2scorer.util import smart_open
+from gecnmt.nucle.util import paragraphs
+from gecnmt.nucle.util import smart_open
 import gecnmt.helpers as helpers
 
 
@@ -120,7 +120,7 @@ for o, v in opts:
         sys.exit(-1)
 
 system_file = helpers.get_replaced_path("nucle")
-gold_file = "m2scorer/source_gold"
+gold_file = "gecnmt/nucle/source_gold"
 
 # load source sentences and gold edits
 source_sentences, gold_edits = load_annotation(gold_file)
