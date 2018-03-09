@@ -1,3 +1,4 @@
 {:dataset         "simple"
  :operation-count 10000
- :validation-size 1000}
+ :validation-size 1000
+ :uri             "username@ip:port"}
