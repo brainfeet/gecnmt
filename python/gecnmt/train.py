@@ -20,7 +20,7 @@ from gecnmt.clojure.core import *
 import gecnmt.clojure.string as string
 import gecnmt.aid as aid
 import gecnmt.helpers as helpers
-import gecnmt.jfleg as jfleg
+import gecnmt.jfleg.jfleg as jfleg
 
 
 def slurp(path):
@@ -762,3 +762,7 @@ def train():
                loaded,
                get_steps(merge(loaded, {"file": file,
                                         "split": "training"})))
+
+
+if equal(__name__, "__main__"):
+    train()
