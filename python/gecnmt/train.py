@@ -634,7 +634,9 @@ def get_inferred_path(dataset):
 def validate_externally(m):
     spit(get_inferred_path(m["dataset"]), infer(m))
     with open(get_inferred_path(m["dataset"]), "w") as file:
-        subprocess.Popen(["sed", "-r", "s/(@@ )|(@@ ?$)//g",
+        subprocess.Popen(["sed",
+                          "-r",
+                          "s/(@@ )|(@@ ?$)//g",
                           get_inferred_path(m["dataset"])],
                          stdout=file)
     if equal(m["dataset"], "jfleg"):
