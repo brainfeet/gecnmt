@@ -633,7 +633,7 @@ def get_inferred_path(dataset):
 
 def validate_externally(m):
     spit(get_inferred_path(m["dataset"]), infer(m))
-    with open(get_inferred_path(m["dataset"]), "w") as file:
+    with open(helpers.get_replaced_path(m["dataset"]), "w") as file:
         subprocess.Popen(["sed",
                           "-r",
                           "s/(@@ )|(@@ ?$)//g",
