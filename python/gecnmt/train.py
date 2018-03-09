@@ -30,12 +30,12 @@ def slurp(path):
 hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
 dim = 50
 glove = vocab.GloVe("6B", dim)
-vocabulary_size = first(glove.vectors.size())
+count = len
+vocabulary_size = count(glove.vectors)
 embedding_vectors = torch.cat((glove.vectors, torch.zeros(1, glove.dim)))
 bag_size = 128
 bpe_path = path.join(helpers.dataset_path, "simple/bpe.json")
 bpe = json.loads(slurp(bpe_path))
-count = len
 bpe_size = count(bpe)
 
 
