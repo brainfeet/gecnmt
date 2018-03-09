@@ -636,7 +636,9 @@ def validate_externally(m):
         subprocess.Popen(["sed", "-r", "s/(@@ )|(@@ ?$)//g",
                           get_inferred_path(m["dataset"])],
                          stdout=file)
-    return jfleg.get_score()
+    if equal(m["dataset"], "jfleg"):
+        return jfleg.get_score()
+    # TODO return m2
 
 
 def validate(m):
