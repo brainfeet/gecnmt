@@ -680,6 +680,15 @@ min = comp(builtins.min,
            vector)
 
 
+def get_checkpoint_path(s):
+    return path.join("checkpoints", str(s, ".pth.tar"))
+
+
+def save(m):
+    # TODO implement this function
+    return get_checkpoint_path(m["checkpoint"])
+
+
 def run_training_step(reduction, step):
     learn(merge(reduction, step))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]), 0):
