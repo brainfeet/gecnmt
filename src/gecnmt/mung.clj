@@ -1,4 +1,4 @@
-(ns gecnmt.prepare
+(ns gecnmt.mung
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [clojure.set :as set]
@@ -259,7 +259,7 @@
   (comp (partial run! append-file)
         get-source-targets))
 
-(defn mung
+(defn mung*
   [{dataset :dataset :as m}]
   (aid/mlet [_ (if (= dataset "simple")
                  (aid/mlet [_ (extract)]
@@ -274,3 +274,10 @@
             (build-vocabulary dataset)
             (split-dataset m)
             (sort-by-length dataset)))
+
+(defn mung
+  []
+  (-> "resources/hyperparameter/hyperparameter.edn"
+      slurp
+      read-string
+      mung*))

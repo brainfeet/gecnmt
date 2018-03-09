@@ -1,7 +1,8 @@
 (ns gecnmt.core
-  (:gen-class))
+  (:require [gecnmt.mung :as mung]))
 
 (defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+  [command]
+  (println (({"mung" mung/mung} command)))
+  ;mung/mung doesn't exit immediately
+  (shutdown-agents))
