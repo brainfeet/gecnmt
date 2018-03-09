@@ -687,9 +687,11 @@ def run_training_step(reduction, step):
         validated = validate(reduction)
     else:
         validated = {}
-    return merge_with(min,
-                      transform_("step_count", inc, reduction),
-                      select_keys(validated, ("simple",)))
+    return merge_with(max,
+                      merge_with(min,
+                                 transform_("step_count", inc, reduction),
+                                 select_keys(validated, ("simple",))),
+                      select_keys(validated, ("jfleg", "nucle")))
 
 
 def initialize(m):
