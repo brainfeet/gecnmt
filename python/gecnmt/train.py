@@ -669,6 +669,10 @@ def learn(m):
     return loss
 
 
+def select_keys(m, ks):
+    return funcy.select_keys(partial(contains_, ks), m)
+
+
 def run_training_step(reduction, step):
     learn(merge(reduction, step))
     if equal(mod(reduction["step_count"], reduction["validation_interval"]),
