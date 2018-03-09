@@ -448,7 +448,8 @@ def pair(m):
 
 get_variable = comp(batch_transpose,
                     autograd.Variable)
-embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
+embedding = nn.Embedding(count(embedding_vectors),
+                         count(first(embedding_vectors)))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
 convert_to_variables = comp(pair,
