@@ -719,27 +719,34 @@ def state_dict(x):
     return x.state_dict()
 
 
+def save_(m):
+    torch.save(transform_(multi_path("model", "optimizer"), state_dict, m),
+               get_checkpoint_path(m["checkpoint"]))
+
+
 def make_compare_save(before, after):
     def compare_save(m):
         if m["comparator"](before[m["checkpoint"]], after[m["checkpoint"]]):
-            torch.save(transform_(multi_path("model", "optimizer"),
-                                  state_dict,
-                                  after),
-                       get_checkpoint_path(m["checkpoint"]))
+            save_(set_val_("checkpoint", m["checkpoint"], after))
     return compare_save
 
 
 def save(before, after):
     # TODO implement this function
+    save_(set_val_("checkpoint", "recent", after))
     run_(make_compare_save(before, after), ({"checkpoint": "simple",
                                              "comparator": greater_than},
                                             {"checkpoint": "jfleg",
                                              "comparator": less_than}))
 
 
+def validation_step_(m):
+    return equal(mod(m["step_count"], m["validation_interval"]), 0)
+
+
 def run_training_step(reduction, step):
     learn(merge(reduction, step))
-    if equal(mod(reduction["step_count"], reduction["validation_interval"]), 0):
+    if validation_step_(reduction):
         validated = validate(reduction)
     else:
         validated = {}
@@ -748,7 +755,8 @@ def run_training_step(reduction, step):
                                   transform_("step_count", inc, reduction),
                                   select_keys(validated, ("simple",))),
                        select_keys(validated, ("jfleg", "nucle")))
-    save(reduction, after)
+    if validation_step_(reduction):
+        save(reduction, after)
     return after
 
 
