@@ -144,4 +144,5 @@ ENV/
 hyperparameter/hyperparameter.json
 .vector_cache
 checkpoints/*
+test/test.json
 !.gitkeep
