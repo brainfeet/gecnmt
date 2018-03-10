@@ -773,14 +773,18 @@ def train():
                                         "split": "training"})))
 
 
+def get_corrected_path(m):
+    return path.join(helpers.dataset_path, m["dataset"], "corrected.txt")
+
+
 def test():
-    # TODO implement this function
     with open(get_sorted_path(set_val_("split",
                                        "non_training",
                                        test_parameter))) as file:
-        infer(set_val_("file",
-                       file,
-                       load(merge(hyperparameter, test_parameter))))
+        spit(get_corrected_path(test_parameter),
+             infer(set_val_("file",
+                            file,
+                            load(merge(hyperparameter, test_parameter)))))
 
 
 test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
