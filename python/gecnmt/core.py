@@ -715,11 +715,17 @@ def less_than(x, y):
     return x < y
 
 
+def state_dict(x):
+    return x.state_dict()
+
+
 def make_compare_save(before, after):
     def compare_save(m):
-        # TODO implement this function
         if m["comparator"](before[m["checkpoint"]], after[m["checkpoint"]]):
-            get_checkpoint_path(m["checkpoint"])
+            torch.save(transform_(multi_path("model", "optimizer"),
+                                  state_dict,
+                                  after),
+                       get_checkpoint_path(m["checkpoint"]))
     return compare_save
 
 
