@@ -26,13 +26,15 @@ source activate gecnmt
 lein run munge
 cd python
 export PYTHONPATH=$(pwd)
-python gecnmt/train.py
+python gecnmt/core.py train
+python gecnmt/core.py test
 ```
 
 ## Options
 
 resources/hyperperameter/hyperperameter.edn
 python/hyperperameter/hyperperameter.json
+python/test/test.json
 
 ## Examples
 
