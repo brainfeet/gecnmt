@@ -764,6 +764,7 @@ def train():
                                         "split": "training"})))
 
 
+test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
 parser = argparse.ArgumentParser()
 parser.add_argument("command", type=builtins.str)
 

@@ -34,7 +34,7 @@ python gecnmt/core.py test
 
 resources/hyperperameter/hyperperameter.edn
 python/hyperperameter/hyperperameter.json
-python/test/test.json
+python/test_parameter/test_parameter.json
 
 ## Examples
 
