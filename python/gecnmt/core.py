@@ -662,9 +662,9 @@ def validate_externally(m):
 def validate(m):
     # TODO implement this function
     m["model"].eval()
-    result = {"simple": validate_internally(set_val_("split", "validation", m)),
+    result = {"simple": validate_internally(set_val_("split", "non_training", m)),
               "jfleg": validate_externally(merge(m, {"dataset": "jfleg",
-                                                     "split": "validation"}))}
+                                                     "split": "non_training"}))}
     m["model"].train()
     return result
 

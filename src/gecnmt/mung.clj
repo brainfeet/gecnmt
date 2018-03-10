@@ -204,9 +204,9 @@
           (s/select [s/ALL s/ALL]
                     (map (partial aid/funcall map)
                          (map (partial make-get-filename-content dataset)
-                              ["validation" "training"])
+                              ["non_training" "training"])
                          (split-at validation-size content)))
-          (map (make-get-filename-content dataset "validation") content))))
+          (map (make-get-filename-content dataset "non_training") content))))
 
 (defn split-dataset
   [{dataset :dataset :as m}]
@@ -241,8 +241,8 @@
 (defn get-source-targets
   [dataset]
   (if (= dataset "simple")
-    (mapcat (partial get-source-targets* dataset) ["training" "validation"])
-    (get-source-targets* dataset "validation")))
+    (mapcat (partial get-source-targets* dataset) ["training" "non_training"])
+    (get-source-targets* dataset "non_training")))
 
 (def append-file
   (aid/build appending-spit-parents
