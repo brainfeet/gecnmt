@@ -18,7 +18,7 @@
 
 from optparse import OptionParser
 
-from gecnmt.nucle.util import uniq
+from nucle.util import uniq
 import re
 import sys
 from copy import deepcopy
