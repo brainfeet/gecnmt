@@ -662,9 +662,10 @@ def validate_externally(m):
 def validate(m):
     # TODO implement this function
     m["model"].eval()
-    result = {"simple": validate_internally(set_val_("split", "non_training", m)),
-              "jfleg": validate_externally(merge(m, {"dataset": "jfleg",
-                                                     "split": "non_training"}))}
+    result = {
+        "simple": validate_internally(set_val_("split", "non_training", m)),
+        "jfleg": validate_externally(merge(m, {"dataset": "jfleg",
+                                               "split": "non_training"}))}
     m["model"].train()
     return result
 
@@ -757,11 +758,15 @@ def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as file:
-        loaded = load(hyperparameter)
+        loaded = load(set_val_("checkpoint", "recent", hyperparameter))
         reduce(run_training_step,
                loaded,
                get_steps(merge(loaded, {"file": file,
                                         "split": "training"})))
+
+
+def test():
+    load(merge(hyperparameter, test_parameter))
 
 
 test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
