@@ -766,6 +766,7 @@ def train():
 
 
 def test():
+    # TODO implement this function
     load(merge(hyperparameter, test_parameter))
 
 
