@@ -690,7 +690,6 @@ def learn(m):
                                {"dataset": "simple",
                                 "split": "training"}))["loss"]
     loss.backward()
-    # TODO print loss
     divide(loss, m["length"])
     m["optimizer"].step()
     return loss
@@ -754,6 +753,7 @@ def run_training_step(reduction, step):
                                   transform_("step_count", inc, reduction),
                                   select_keys(validated, ("simple",))),
                        select_keys(validated, ("jfleg", "nucle")))
+    # TODO print loss
     if validation_step_(reduction):
         save(reduction, after)
     return after
