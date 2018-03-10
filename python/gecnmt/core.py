@@ -1,11 +1,15 @@
+import argparse
 import functools
 import json
 import os.path as path
+import subprocess
 
 import funcy
+import math
 import numpy
 import torch
 import torch.autograd as autograd
+import torch.cuda as cuda
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
@@ -16,6 +20,8 @@ import torchtext.vocab as vocab
 from gecnmt.clojure.core import *
 import gecnmt.clojure.string as string
 import gecnmt.aid as aid
+import gecnmt.helpers as helpers
+import gecnmt.jfleg.jfleg as jfleg
 
 
 def slurp(path):
@@ -26,13 +32,21 @@ def slurp(path):
 hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
 dim = 50
 glove = vocab.GloVe("6B", dim)
-vocabulary_size = first(glove.vectors.size())
-embedding_vectors = torch.cat((glove.vectors, torch.zeros(1, glove.dim)))
-bag_size = 128
-dataset_path = "../resources/dataset"
-bpe_path = path.join(dataset_path, "simple/bpe.json")
-bpe = json.loads(slurp(bpe_path))
 count = len
+vocabulary_size = count(glove.vectors)
+
+
+def get_cuda(x):
+    if torch.cuda.is_available():
+        return x.cuda()
+    return x
+
+
+embedding_vectors = get_cuda(torch.cat((glove.vectors,
+                                        torch.zeros(1, glove.dim))))
+bag_size = 128
+bpe_path = path.join(helpers.dataset_path, "simple/bpe.json")
+bpe = json.loads(slurp(bpe_path))
 bpe_size = count(bpe)
 
 
@@ -82,23 +96,23 @@ def get_model(m):
         m["hidden_size"])
     model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
     model.out = nn.Linear(m["hidden_size"], bpe_size)
-    return model
+    return get_cuda(model)
 
 
 get_bidirectional_size = partial(multiply, 2)
 
 
 def get_hidden(m):
-    return autograd.Variable(if_(m["encoder"],
-                                 init.kaiming_normal,
-                                 identity)(
-        torch.zeros(if_(m["encoder"],
-                        get_bidirectional_size,
-                        identity)(m["num_layers"]),
-                    if_(equal(m["split"], "training"),
-                        m["batch_size"],
-                        1),
-                    m["hidden_size"])))
+    return get_cuda_variable(
+        if_(m["encoder"],
+            init.kaiming_normal,
+            identity)(torch.zeros(if_(m["encoder"],
+                                      get_bidirectional_size,
+                                      identity)(m["num_layers"]),
+                                  if_(equal(m["split"], "training"),
+                                      m["batch_size"],
+                                      1),
+                                  m["hidden_size"])))
 
 
 get_mse = nn.MSELoss()
@@ -117,7 +131,10 @@ def encode(m):
 
 
 def get_sorted_path(m):
-    return path.join(dataset_path, m["dataset"], m["split"], "sorted.txt")
+    return path.join(helpers.dataset_path,
+                     m["dataset"],
+                     m["split"],
+                     "sorted.txt")
 
 
 def reduce(f, *more):
@@ -282,10 +299,11 @@ def or_(*more):
     return or_(first(more), or_(*rest(more)))
 
 
-# TODO check tag_
-preposition_ = comp(partial(contains_, prepositions),
-                    partial(aid.flip(get),
-                            "lower_"))
+preposition_ = build(and_,
+                     comp(partial(equal, "IN"),
+                          partial(aid.flip(get), "tag_")),
+                     comp(partial(contains_, prepositions),
+                          partial(aid.flip(get), "lower_")))
 remove_tokens = partial(transform_,
                         "tokens",
                         # if tuple isn't called, tokens don't persist
@@ -368,7 +386,6 @@ get_embedded = comp(tuple,
                                       partial(contains_, glove_words),
                                       partial(aid.flip(get),
                                               "lower_"))))
-# TODO implement this function
 convert_from_tokens = comp(
     apply(comp,
           map(make_set,
@@ -438,9 +455,12 @@ def pair(m):
                     m)
 
 
-get_variable = comp(batch_transpose,
-                    autograd.Variable)
-embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
+get_cuda_variable = comp(get_cuda,
+                         autograd.Variable)
+get_transposed_variable = comp(batch_transpose,
+                               get_cuda_variable)
+embedding = get_cuda(nn.Embedding(count(embedding_vectors),
+                                  count(first(embedding_vectors))))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
 convert_to_variables = comp(pair,
@@ -455,7 +475,7 @@ convert_to_variables = comp(pair,
                                                "input-reference-bpes",
                                                "output-reference-bpes",
                                                "decoder-bpe"),
-                                    get_variable),
+                                    get_transposed_variable),
                             partial(transform_,
                                     multi_path("bag", "embedded"),
                                     torch.FloatTensor),
@@ -493,11 +513,11 @@ def get_steps(m):
 
 
 def pad_embedding(m):
-    if equal(first(m["encoder_embedding"].size()), m["max_length"]):
+    if equal(count(m["encoder_embedding"]), m["max_length"]):
         return m["encoder_embedding"]
     return torch.cat(
         (m["encoder_embedding"],
-         autograd.Variable(
+         get_cuda_variable(
              torch.zeros(*transform_(FIRST,
                                      partial(subtract,
                                              m["max_length"]),
@@ -505,6 +525,10 @@ def pad_embedding(m):
 
 
 get_nll = nn.NLLLoss()
+
+
+def get_first_data(variable):
+    return first(variable.data)
 
 
 def decode_token(reduction, element):
@@ -545,7 +569,7 @@ def decode_token(reduction, element):
                        identity,
                        partial(set_val_,
                                END,
-                               (bpe[str(first(decoder_bpe.data))],))),
+                               (bpe[str(get_first_data(decoder_bpe))],))),
                    transform_("loss", add_loss, reduction)),
         {"hidden": hidden,
          "decoder-bpe": decoder_bpe})
@@ -591,10 +615,14 @@ def validate_internally(m):
         return numpy.mean(
             tuple(
                 map(comp(
-                    partial(aid.flip(get), "loss"),
+                    get_first_data,
+                    partial(aid.flip(get),
+                            "loss"),
                     make_run_validation_step(merge(m,
                                                    {"dataset": "simple"}))),
-                    get_steps(set_val_("file", file, m)))))
+                    get_steps(set_val_("file",
+                                       file,
+                                       m)))))
 
 
 join = str_join
@@ -606,31 +634,37 @@ def delete_eos(sentence):
 
 def infer(m):
     with open(get_sorted_path(m)) as file:
-        return join("\n",
-                    map(comp(delete_eos,
+        return join(map(comp(partial(aid.flip(str), "\n"),
+                             delete_eos,
                              partial(join, " "),
                              partial(aid.flip(get), "decoder_bpes"),
                              make_run_validation_step(m)),
                         get_steps(set_val_("file", file, m))))
 
 
-inferred_filename = "inferred.txt"
-
-
 def get_inferred_path(dataset):
-    return path.join(dataset_path, dataset, inferred_filename)
+    return path.join(helpers.dataset_path, dataset, "inferred.txt")
 
 
 def validate_externally(m):
     spit(get_inferred_path(m["dataset"]), infer(m))
+    with open(helpers.get_replaced_path(m["dataset"]), "w") as file:
+        subprocess.Popen(["sed",
+                          "-r",
+                          "s/(@@ )|(@@ ?$)//g",
+                          get_inferred_path(m["dataset"])],
+                         stdout=file)
+    if equal(m["dataset"], "jfleg"):
+        return jfleg.get_score()
+        # TODO return m2
 
 
 def validate(m):
     # TODO implement this function
     m["model"].eval()
-    result = {"simple": validate_internally(set_val_("split", "validation", m)),
+    result = {"simple": validate_internally(set_val_("split", "non_training", m)),
               "jfleg": validate_externally(merge(m, {"dataset": "jfleg",
-                                                     "split": "validation"}))}
+                                                     "split": "non_training"}))}
     m["model"].train()
     return result
 
@@ -654,33 +688,69 @@ def learn(m):
     return loss
 
 
+def select_keys(m, ks):
+    return funcy.select_keys(partial(contains_, ks), m)
+
+
+max = comp(builtins.max,
+           vector)
+min = comp(builtins.min,
+           vector)
+
+
+def get_checkpoint_path(s):
+    return path.join("checkpoints", str(s, ".pth.tar"))
+
+
+def less_than(x, y):
+    return x < y
+
+
+def make_compare_save(before, after):
+    def compare_save(m):
+        # TODO implement this function
+        if m["comparator"](before[m["checkpoint"]], after[m["checkpoint"]]):
+            get_checkpoint_path(m["checkpoint"])
+    return compare_save
+
+
+def save(before, after):
+    # TODO implement this function
+    run_(make_compare_save(before, after), ({"checkpoint": "simple",
+                                             "comparator": greater_than},
+                                            {"checkpoint": "jfleg",
+                                             "comparator": less_than}))
+
+
 def run_training_step(reduction, step):
     learn(merge(reduction, step))
-    if equal(mod(reduction["step_count"], reduction["validation_interval"]),
-             0):
-        validate(reduction)
-    return transform_("step_count", inc, reduction)
-
-
-def initialize(m):
-    m["model"].encoder_linear.weight = nn.Parameter(
-        init.kaiming_normal(
-            torch.zeros(dim, get_bidirectional_size(m["hidden_size"]))))
-    # TODO initialize the decoder
-    return m["model"]
+    if equal(mod(reduction["step_count"], reduction["validation_interval"]), 0):
+        validated = validate(reduction)
+    else:
+        validated = {}
+    after = merge_with(max,
+                       merge_with(min,
+                                  transform_("step_count", inc, reduction),
+                                  select_keys(validated, ("simple",))),
+                       select_keys(validated, ("jfleg", "nucle")))
+    save(reduction, after)
+    return after
 
 
 get_optimizer = comp(optim.Adam,
                      partial(filter,
                              partial(aid.flip(getattr), "requires_grad")))
+POSITIVE_INFINITY = math.inf
 
 
 def load(m):
     # TODO implement this function
-    model = initialize(set_val_("model", get_model(m), m))
+    model = get_model(m)
     return merge(m, {"model": model,
                      "optimizer": get_optimizer(model.parameters()),
-                     "step_count": 0})
+                     "step_count": 0,
+                     "simple": POSITIVE_INFINITY,
+                     "jfleg": 0})
 
 
 def train():
@@ -692,3 +762,12 @@ def train():
                loaded,
                get_steps(merge(loaded, {"file": file,
                                         "split": "training"})))
+
+
+test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
+parser = argparse.ArgumentParser()
+parser.add_argument("command", type=builtins.str)
+
+if equal(__name__, "__main__"):
+    if equal(parser.parse_args().command, "train"):
+        train()

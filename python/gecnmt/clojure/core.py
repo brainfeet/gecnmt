@@ -40,3 +40,11 @@ def spit(f, content, append=False):
                      "a",
                      "w")) as file:
         file.write(content)
+
+
+def dorun(coll):
+    for _ in coll:
+        pass
+
+
+run_ = comp(dorun, map)

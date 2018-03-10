@@ -56,5 +56,6 @@ crashlytics-build.properties
 fabric.properties
 
 ### gecnmt
-resources/dataset
+resources/dataset/*
+resources/hyperparameter/hyperparameter.edn
 !.gitkeep

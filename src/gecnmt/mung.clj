@@ -1,4 +1,4 @@
-(ns gecnmt.prepare
+(ns gecnmt.mung
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [clojure.set :as set]
@@ -79,8 +79,7 @@
 (def parse-keywordize
   (partial (aid/flip parse-string) true))
 
-;TODO rename this function as ascii?
-(def is-ascii?
+(def ascii?
   (partial every? (comp (partial > 128)
                         int)))
 
@@ -93,7 +92,7 @@
                        vec
                        (partial filter
                                 (comp (aid/build and
-                                                 is-ascii?
+                                                 ascii?
                                                  (complement has-newline?)
                                                  (complement str/blank?))
                                       :text))
@@ -137,10 +136,10 @@
                        :output "text.txt"}))
 
 (defn learn-bpe
-  [dataset]
+  [{:keys [dataset operation-count]}]
   (command/python "bin/learn_bpe.py"
                   "-s"
-                  "10000"
+                  operation-count
                   "<"
                   (get-dataset-path dataset "text.txt")
                   ">"
@@ -199,33 +198,32 @@
      (str (generate-string m) "\n")]))
 
 (defn spit-dataset
-  [dataset coll & more]
+  [{:keys [content dataset validation-size]}]
   (run! (partial apply appending-spit-parents)
         (if (= dataset "simple")
           (s/select [s/ALL s/ALL]
                     (map (partial aid/funcall map)
                          (map (partial make-get-filename-content dataset)
-                              ["validation" "training"])
-                         (split-at (first more) coll)))
-          (map (make-get-filename-content dataset "validation") coll))))
+                              ["non_training" "training"])
+                         (split-at validation-size content)))
+          (map (make-get-filename-content dataset "non_training") content))))
 
 (defn split-dataset
-  [dataset & more]
+  [{dataset :dataset :as m}]
   (with-open [random-file (->> "random.txt"
                                (get-dataset-path dataset)
                                io/reader)]
     (with-open [bpe-file (->> "bpe.txt"
                               (get-dataset-path dataset)
                               io/reader)]
-      (apply spit-dataset
-             dataset
-             (structure {:bpe    (line-seq bpe-file)
-                         :index  (->> "index.edn"
-                                      (get-dataset-path dataset)
-                                      slurp
-                                      read-string)
-                         :random (line-seq random-file)})
-             more))))
+      (spit-dataset
+        (s/setval :content
+                  (structure {:bpe    (line-seq bpe-file)
+                              :index  (->> "index.edn"
+                                           (get-dataset-path dataset)
+                                           slurp
+                                           read-string)
+                              :random (line-seq random-file)}) m)))))
 
 (def get-source-target
   (juxt identity
@@ -243,8 +241,8 @@
 (defn get-source-targets
   [dataset]
   (if (= dataset "simple")
-    (mapcat (partial get-source-targets* dataset) ["training" "validation"])
-    (get-source-targets* dataset "validation")))
+    (mapcat (partial get-source-targets* dataset) ["training" "non_training"])
+    (get-source-targets* dataset "non_training")))
 
 (def append-file
   (aid/build appending-spit-parents
@@ -262,8 +260,7 @@
         get-source-targets))
 
 (defn mung
-  ;TODO take num_operations as an argument
-  [dataset & more]
+  [{dataset :dataset :as m}]
   (aid/mlet [_ (if (= dataset "simple")
                  (aid/mlet [_ (extract)]
                            (either/right (combine)))
@@ -272,8 +269,8 @@
              _ (either/right (split-sentences dataset))
              _ (randomize dataset)
              _ (either/right (get-text dataset))
-             _ (learn-bpe dataset)
+             _ (learn-bpe m)
              _ (apply-bpe dataset)]
             (build-vocabulary dataset)
-            (apply split-dataset dataset more)
+            (split-dataset m)
             (sort-by-length dataset)))
