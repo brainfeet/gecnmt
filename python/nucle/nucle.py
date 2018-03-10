@@ -130,13 +130,12 @@ for o, v in opts:
         sys.exit(-1)
 
 system_file = helpers.get_replaced_path("nucle")
-gold_file = "source_gold"
+gold_file = "nucle/source_gold"
+# load source sentences and gold edits
+source_sentences, gold_edits = load_annotation(gold_file)
 
 
 def get_score():
-    # load source sentences and gold edits
-    source_sentences, gold_edits = load_annotation(gold_file)
-
     # load system hypotheses
     fin = smart_open(system_file, 'r')
     # system_sentences = [line.decode("utf8").strip() for line in fin.readlines()]
