@@ -671,9 +671,8 @@ def validate_externally(m):
 def validate(m):
     # TODO implement this function
     m["model"].eval()
-    result = {
-        "simple": validate_internally(m),
-        "jfleg": validate_externally(set_val_("dataset", "jfleg", m))}
+    result = {"simple": validate_internally(m),
+              "jfleg": validate_externally(set_val_("dataset", "jfleg", m))}
     m["model"].train()
     return result
 
