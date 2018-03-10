@@ -21,7 +21,7 @@ from gecnmt.clojure.core import *
 import gecnmt.clojure.string as string
 import gecnmt.aid as aid
 import gecnmt.helpers as helpers
-import gecnmt.jfleg.jfleg as jfleg
+import jfleg.jfleg as jfleg
 
 
 def slurp(path):
