@@ -31,8 +31,8 @@ python gecnmt/train.py
 
 ## Options
 
-resources/hyperperameters/hyperperameter.edn
-python/hyperperameters/hyperperameter.json
+resources/hyperperameter/hyperperameter.edn
+python/hyperperameter/hyperperameter.json
 
 ## Examples
 
