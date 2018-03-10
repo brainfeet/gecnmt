@@ -38,14 +38,13 @@ from nucle.util import smart_open
 import gecnmt.helpers as helpers
 
 
-
 def load_annotation(gold_file):
     source_sentences = []
     gold_edits = []
     fgold = smart_open(gold_file, 'r')
     puffer = fgold.read()
     fgold.close()
-    #puffer = puffer.decode('utf8')
+    # puffer = puffer.decode('utf8')
     for item in paragraphs(puffer.splitlines(True)):
         item = item.splitlines(False)
         sentence = [line[2:].strip() for line in item if line.startswith('S ')]
@@ -63,20 +62,26 @@ def load_annotation(gold_file):
             if etype == 'noop':
                 start_offset = -1
                 end_offset = -1
-            corrections =  [c.strip() if c != '-NONE-' else '' for c in fields[2].split('||')]
+            corrections = [c.strip() if c != '-NONE-' else '' for c in
+                           fields[2].split('||')]
             # NOTE: start and end are *token* offsets
-            original = ' '.join(' '.join(sentence).split()[start_offset:end_offset])
+            original = ' '.join(
+                ' '.join(sentence).split()[start_offset:end_offset])
             annotator = int(fields[5])
             if annotator not in list(annotations.keys()):
                 annotations[annotator] = []
-            annotations[annotator].append((start_offset, end_offset, original, corrections))
+            annotations[annotator].append(
+                (start_offset, end_offset, original, corrections))
         tok_offset = 0
         for this_sentence in sentence:
             tok_offset += len(this_sentence.split())
             source_sentences.append(this_sentence)
             this_edits = {}
             for annotator, annotation in annotations.items():
-                this_edits[annotator] = [edit for edit in annotation if edit[0] <= tok_offset and edit[1] <= tok_offset and edit[0] >= 0 and edit[1] >= 0]
+                this_edits[annotator] = [edit for edit in annotation if
+                                         edit[0] <= tok_offset and edit[
+                                             1] <= tok_offset and edit[
+                                             0] >= 0 and edit[1] >= 0]
             if len(this_edits) == 0:
                 this_edits[0] = []
             gold_edits.append(this_edits)
@@ -90,19 +95,24 @@ def print_usage():
     print("  source_gold          -   source sentences with gold token edits", )
     print("OPTIONS", )
     print("  -v    --verbose                   -  print verbose output", )
-    print("        --very_verbose              -  print lots of verbose output", )
-    print("        --max_unchanged_words N     -  Maximum unchanged words when extraction edit. Default 2.", )
-    print("        --beta B                    -  Beta value for F-measure. Default 0.5.", )
-    print("        --ignore_whitespace_casing  -  Ignore edits that only affect whitespace and caseing. Default no.", )
+    print(
+        "        --very_verbose              -  print lots of verbose output", )
+    print(
+        "        --max_unchanged_words N     -  Maximum unchanged words when extraction edit. Default 2.", )
+    print(
+        "        --beta B                    -  Beta value for F-measure. Default 0.5.", )
+    print(
+        "        --ignore_whitespace_casing  -  Ignore edits that only affect whitespace and caseing. Default no.", )
 
 
-
-max_unchanged_words=2
+max_unchanged_words = 2
 beta = 0.5
-ignore_whitespace_casing= False
+ignore_whitespace_casing = False
 verbose = False
 very_verbose = False
-opts, args = getopt(sys.argv[1:], "v", ["max_unchanged_words=", "beta=", "verbose", "ignore_whitespace_casing", "very_verbose"])
+opts, args = getopt(sys.argv[1:], "v",
+                    ["max_unchanged_words=", "beta=", "verbose",
+                     "ignore_whitespace_casing", "very_verbose"])
 for o, v in opts:
     if o in ('-v', '--verbose'):
         verbose = True
@@ -122,18 +132,24 @@ for o, v in opts:
 system_file = helpers.get_replaced_path("nucle")
 gold_file = "source_gold"
 
-# load source sentences and gold edits
-source_sentences, gold_edits = load_annotation(gold_file)
 
-# load system hypotheses
-fin = smart_open(system_file, 'r')
-#system_sentences = [line.decode("utf8").strip() for line in fin.readlines()]
-system_sentences = [line.strip() for line in fin.readlines()]
-fin.close()
+def get_score():
+    # load source sentences and gold edits
+    source_sentences, gold_edits = load_annotation(gold_file)
 
-p, r, f1 = levenshtein.batch_multi_pre_rec_f1(system_sentences, source_sentences, gold_edits, max_unchanged_words, beta, ignore_whitespace_casing, verbose, very_verbose)
+    # load system hypotheses
+    fin = smart_open(system_file, 'r')
+    # system_sentences = [line.decode("utf8").strip() for line in fin.readlines()]
+    system_sentences = [line.strip() for line in fin.readlines()]
+    fin.close()
 
-print("Precision   : %.4f" % p)
-print("Recall      : %.4f" % r)
-print("F_%.1f       : %.4f" % (beta, f1))
+    p, r, f1 = levenshtein.batch_multi_pre_rec_f1(system_sentences,
+                                                  source_sentences, gold_edits,
+                                                  max_unchanged_words, beta,
+                                                  ignore_whitespace_casing,
+                                                  verbose, very_verbose)
 
+    print("Precision   : %.4f" % p)
+    print("Recall      : %.4f" % r)
+    print("F_%.1f       : %.4f" % (beta, f1))
+    return f1
