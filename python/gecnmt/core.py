@@ -604,25 +604,33 @@ def mod(num, div):
     return num % div
 
 
-def make_run_validation_step(m):
+def make_run_non_training_step(m):
     def run_internal_step(step):
-        return decode_tokens(merge(m, step, encode(merge(m, step))))
+        return decode_tokens(merge(set_val_("split",
+                                            "non_training",
+                                            m),
+                                   step,
+                                   encode(merge(set_val_("split",
+                                                         "non_training",
+                                                         m), step))))
     return run_internal_step
 
 
 def validate_internally(m):
-    with open(get_sorted_path(merge(m, {"dataset": "simple"}))) as file:
+    with open(get_sorted_path(merge(m, {"dataset": "simple",
+                                        "split": "non_training"}))) as file:
         return numpy.mean(
             tuple(
                 map(comp(
                     get_first_data,
                     partial(aid.flip(get),
                             "loss"),
-                    make_run_validation_step(merge(m,
-                                                   {"dataset": "simple"}))),
-                    get_steps(set_val_("file",
-                                       file,
-                                       m)))))
+                    make_run_non_training_step(set_val_("dataset",
+                                                        "simple",
+                                                        m))),
+                    get_steps(merge(m, {"dataset": "simple",
+                                        "split": "non_training",
+                                        "file": file})))))
 
 
 join = str_join
@@ -633,13 +641,14 @@ def delete_eos(sentence):
 
 
 def infer(m):
-    with open(get_sorted_path(m)) as file:
+    with open(get_sorted_path(set_val_("split", "non_training", m))) as file:
         return join(map(comp(partial(aid.flip(str), "\n"),
                              delete_eos,
                              partial(join, " "),
                              partial(aid.flip(get), "decoder_bpes"),
-                             make_run_validation_step(m)),
-                        get_steps(set_val_("file", file, m))))
+                             make_run_non_training_step(m)),
+                        get_steps(merge(m, {"split": "non_training",
+                                            "file": file}))))
 
 
 def get_inferred_path(dataset):
@@ -663,9 +672,8 @@ def validate(m):
     # TODO implement this function
     m["model"].eval()
     result = {
-        "simple": validate_internally(set_val_("split", "non_training", m)),
-        "jfleg": validate_externally(merge(m, {"dataset": "jfleg",
-                                               "split": "non_training"}))}
+        "simple": validate_internally(m),
+        "jfleg": validate_externally(set_val_("dataset", "jfleg", m))}
     m["model"].train()
     return result
 
@@ -767,7 +775,12 @@ def train():
 
 def test():
     # TODO implement this function
-    load(merge(hyperparameter, test_parameter))
+    with open(get_sorted_path(set_val_("split",
+                                       "non_training",
+                                       test_parameter))) as file:
+        infer(set_val_("file",
+                       file,
+                       load(merge(hyperparameter, test_parameter))))
 
 
 test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
