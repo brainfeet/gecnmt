@@ -14,5 +14,5 @@
   :main ^:skip-aot gecnmt.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  :auto {"rsync" {:paths        ["."]
-                  :file-pattern #"\.(clj|edn|json|py)$"}})
+  :auto {:default {:paths        ["."]
+                   :file-pattern #"\.(clj|edn|json|py)$"}})
