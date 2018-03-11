@@ -695,9 +695,8 @@ def learn(m):
                                {"dataset": "simple",
                                 "split": "training"}))["loss"]
     loss.backward()
-    divide(loss, m["length"])
     m["optimizer"].step()
-    return loss
+    return divide(loss, m["length"])
 
 
 def select_keys(m, ks):
