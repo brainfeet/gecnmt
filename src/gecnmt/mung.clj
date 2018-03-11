@@ -26,11 +26,14 @@
            (get-dataset-path "simple/original.xml")))
 
 (def parse-extracted
-  (comp (partial mapcat (comp (partial str/join "\n")
-                              (partial remove str/blank?)
-                              str/split-lines
-                              :text
-                              (partial (aid/flip parse-string) true)))
+  (comp (partial mapcat
+                 (comp (partial str/join "\n")
+                       (partial remove (aid/build or
+                                                  (partial re-find #"\|\|")
+                                                  str/blank?))
+                       str/split-lines
+                       :text
+                       (partial (aid/flip parse-string) true)))
         str/split-lines))
 
 (defn slurp-extracted
@@ -275,5 +278,5 @@
             (split-dataset m)
             (sort-by-length dataset)))
 
-(mung {:dataset "sample"
+(mung {:dataset         "sample"
        :operation-count 10000})
