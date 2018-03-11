@@ -490,26 +490,31 @@ convert_to_variables = comp(pair,
 
 def get_steps(m):
     # TODO cycle
-    return map(comp(convert_to_variables,
-                    if_(equal(m["split"], "training"),
-                        identity,
-                        partial(transform_, MAP_VALS, vector)),
-                    partial(apply, merge_with, vector),
-                    partial(sort_by,
-                            greater_than,
-                            partial(aid.flip(get), "lengths"))),
-               apply(concat,
-                     map(partial(partition, if_(equal(m["split"], "training"),
-                                                m["batch_size"],
-                                                1)),
-                         partition_by(partial(aid.flip(get), "length"),
-                                      map(convert_from_tokens,
-                                          filter(comp(
-                                              partial(greater_than,
-                                                      m["max_length"]),
-                                              partial(aid.flip(get), "length")),
-                                              map(json.loads,
-                                                  (line_seq(m["file"])))))))))
+    return map(
+        comp(convert_to_variables,
+             if_(equal(m["split"], "training"),
+                 identity,
+                 partial(transform_, MAP_VALS, vector)),
+             partial(apply, merge_with, vector),
+             partial(sort_by,
+                     greater_than,
+                     partial(aid.flip(get), "lengths"))),
+        mapcat(
+            partial(partition, if_(equal(m["split"], "training"),
+                                   m["batch_size"],
+                                   1)),
+            partition_by(partial(aid.flip(get), "length"),
+                         map(convert_from_tokens,
+                             remove(comp(partial(equal, 0),
+                                         partial(aid.flip(get), "lengths")),
+                                    map(comp(make_set(("lengths", count)),
+                                             remove_tokens),
+                                        filter(comp(partial(greater_than,
+                                                            m["max_length"]),
+                                                    partial(aid.flip(get),
+                                                            "length")),
+                                               map(json.loads,
+                                                   (line_seq(m["file"]))))))))))
 
 
 def pad_embedding(m):
