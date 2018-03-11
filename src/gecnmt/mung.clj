@@ -72,6 +72,7 @@
                          "python"
                          more)))
 
+;TODO rename this funciton as tokenize
 (def parse
   (comp (partial python
                  "gecnmt/parse.py"
