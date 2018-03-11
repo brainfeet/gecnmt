@@ -87,16 +87,16 @@
   (partial re-find #".*\n.*"))
 
 (def split-sentences*
-  (comp (partial map
-                 (comp prn-str
-                       vec
-                       (partial filter
-                                (comp (aid/build and
-                                                 ascii?
-                                                 (complement has-newline?)
-                                                 (complement str/blank?))
-                                      :text))
-                       flatten))
+  (comp (partial map prn-str)
+        (partial remove empty?)
+        (partial map (comp vec
+                           (partial filter
+                                    (comp (aid/build and
+                                                     ascii?
+                                                     (complement has-newline?)
+                                                     (complement str/blank?))
+                                          :text))
+                           flatten))
         (partial partition 2)
         (partial partition-by :is_sent_start)
         (partial s/setval* [s/FIRST :is_sent_start] true)
@@ -274,3 +274,6 @@
             (build-vocabulary dataset)
             (split-dataset m)
             (sort-by-length dataset)))
+
+(mung {:dataset "sample"
+       :operation-count 10000})
