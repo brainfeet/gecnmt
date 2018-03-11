@@ -277,6 +277,3 @@
             (build-vocabulary dataset)
             (split-dataset m)
             (sort-by-length dataset)))
-
-(mung {:dataset         "sample"
-       :operation-count 10000})
