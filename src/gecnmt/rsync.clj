@@ -2,7 +2,7 @@
   (:require [gecnmt.command :as command]))
 
 (defn rsync
-  [{uri :uri}]
+  [{target :target}]
   (command/rsync "-azP"
                  "--include=resources/hyperparameter/*"
                  "--include=python/hyperparameter/*"
@@ -10,4 +10,4 @@
                  ;.gitignore in the project root seems to be used as a filter by default
                  "--filter=':- /python/.gitignore'"
                  (System/getProperty "user.dir")
-                 uri))
+                 target))
