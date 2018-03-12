@@ -822,7 +822,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("command", type=builtins.str)
 
 if equal(__name__, "__main__"):
-    if equal(parser.parse_args().command, "train"):
-        train()
-    if equal(parser.parse_args().command, "test"):
-        test()
+    get({"train": train,
+         "test": test},
+        parser.parse_args().command)()
