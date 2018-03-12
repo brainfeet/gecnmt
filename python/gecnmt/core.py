@@ -26,8 +26,8 @@ import nucle.nucle as nucle
 
 
 def slurp(path):
-    with open(path) as file:
-        return file.read()
+    with open(path) as f:
+        return f.read()
 
 
 hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
@@ -629,7 +629,7 @@ def make_run_non_training_step(m):
 
 def validate_internally(m):
     with open(get_sorted_path(merge(m, {"dataset": "simple",
-                                        "split": "non_training"}))) as file:
+                                        "split": "non_training"}))) as f:
         return numpy.mean(
             tuple(map(comp(get_first_data,
                            partial(aid.flip(get), "loss"),
@@ -638,7 +638,7 @@ def validate_internally(m):
                                                                m))),
                       get_steps(merge(m, {"dataset": "simple",
                                           "split": "non_training",
-                                          "file": file})))))
+                                          "file": f})))))
 
 
 join = str_join
@@ -649,14 +649,14 @@ def delete_eos(sentence):
 
 
 def infer(m):
-    with open(get_sorted_path(set_val_("split", "non_training", m))) as file:
+    with open(get_sorted_path(set_val_("split", "non_training", m))) as f:
         return join(map(comp(partial(aid.flip(str), "\n"),
                              delete_eos,
                              partial(join, " "),
                              partial(aid.flip(get), "decoder_bpes"),
                              make_run_non_training_step(m)),
                         get_steps(merge(m, {"split": "non_training",
-                                            "file": file}))))
+                                            "file": f}))))
 
 
 def get_inferred_path(dataset):
@@ -665,12 +665,12 @@ def get_inferred_path(dataset):
 
 def validate_externally(m):
     spit(get_inferred_path(m["dataset"]), infer(m))
-    with open(helpers.get_replaced_path(m["dataset"]), "w") as file:
+    with open(helpers.get_replaced_path(m["dataset"]), "w") as f:
         subprocess.Popen(["sed",
                           "-r",
                           "s/(@@ )|(@@ ?$)//g",
                           get_inferred_path(m["dataset"])],
-                         stdout=file).wait()
+                         stdout=f).wait()
     if equal(m["dataset"], "jfleg"):
         return jfleg.get_score()
     return nucle.get_score()
@@ -787,12 +787,12 @@ def load(m):
 def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
-                                     "split": "training"}))) as file:
+                                     "split": "training"}))) as f:
         loaded = load(set_val_("checkpoint", "recent", hyperparameter))
         reduce(run_training_step,
                loaded,
                get_steps(merge(loaded, {"dataset": "simple",
-                                        "file": file,
+                                        "file": f,
                                         "split": "training"})))
 
 
@@ -803,10 +803,10 @@ def get_corrected_path(m):
 def test():
     with open(get_sorted_path(set_val_("split",
                                        "non_training",
-                                       test_parameter))) as file:
+                                       test_parameter))) as f:
         spit(get_corrected_path(test_parameter),
              infer(set_val_("file",
-                            file,
+                            f,
                             load(merge(hyperparameter, test_parameter)))))
 
 
