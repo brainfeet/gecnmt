@@ -501,9 +501,10 @@ def get_steps(m):
                      greater_than,
                      partial(aid.flip(get), "lengths"))),
         mapcat(
-            partial(partition, if_(equal(m["split"], "training"),
-                                   m["batch_size"],
-                                   1)),
+            partial(partition,
+                    if_(equal(m["split"], "training"),
+                        m["batch_size"],
+                        1)),
             partition_by(
                 partial(aid.flip(get),
                         "length"),
