@@ -583,9 +583,7 @@ def decode_token(reduction, element):
 def decode_tokens(m):
     return reduce(decode_token,
                   merge(m, {"decoder_bpes": (),
-                            "hidden": get_hidden(set_val_("encoder",
-                                                          False,
-                                                          m)),
+                            "hidden": get_hidden(set_val_("encoder", False, m)),
                             "padded_embedding": pad_embedding(m)}),
                   if_(equal(m["dataset"], "simple"),
                       m["reference_bpes"],
