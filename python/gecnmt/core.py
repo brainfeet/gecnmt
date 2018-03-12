@@ -625,17 +625,14 @@ def validate_internally(m):
     with open(get_sorted_path(merge(m, {"dataset": "simple",
                                         "split": "non_training"}))) as file:
         return numpy.mean(
-            tuple(
-                map(comp(
-                    get_first_data,
-                    partial(aid.flip(get),
-                            "loss"),
-                    make_run_non_training_step(set_val_("dataset",
-                                                        "simple",
-                                                        m))),
-                    get_steps(merge(m, {"dataset": "simple",
-                                        "split": "non_training",
-                                        "file": file})))))
+            tuple(map(comp(get_first_data,
+                           partial(aid.flip(get), "loss"),
+                           make_run_non_training_step(set_val_("dataset",
+                                                               "simple",
+                                                               m))),
+                      get_steps(merge(m, {"dataset": "simple",
+                                          "split": "non_training",
+                                          "file": file})))))
 
 
 join = str_join
