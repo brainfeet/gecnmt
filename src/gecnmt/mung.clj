@@ -123,11 +123,14 @@
                        :input  "parsed.txt"
                        :output "split.txt"}))
 
-(def randomize
-  ;TODO don't randomize jfleg or nucle
-  (aid/build (partial command/shuf "-o")
-             (partial (aid/flip get-dataset-path) "random.txt")
-             (partial (aid/flip get-dataset-path) "split.txt")))
+(defn randomize
+  [dataset]
+  ((if (= dataset "simple")
+     (aid/flip (partial command/shuf "-o"))
+     (comp either/right
+           fs/copy))
+    (get-dataset-path dataset "split.txt")
+    (get-dataset-path dataset "random.txt")))
 
 (def append-newline
   (partial (aid/flip str) "\n"))
