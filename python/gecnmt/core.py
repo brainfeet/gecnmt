@@ -677,7 +677,6 @@ def validate_externally(m):
 
 
 def validate(m):
-    # TODO implement this function
     m["model"].eval()
     result = {"simple": validate_internally(m),
               "jfleg": validate_externally(set_val_("dataset", "jfleg", m)),
@@ -738,7 +737,6 @@ def make_compare_save(before, after):
 
 
 def save(before, after):
-    # TODO implement this function
     save_(set_val_("checkpoint", "recent", after))
     run_(make_compare_save(before, after), ({"checkpoint": "simple",
                                              "comparator": greater_than},
