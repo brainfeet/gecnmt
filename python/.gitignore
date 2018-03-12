@@ -145,4 +145,5 @@ hyperparameter/hyperparameter.json
 .vector_cache
 checkpoints/*
 test_parameter/test_parameter.json
+nucle/source_gold
 !.gitkeep
