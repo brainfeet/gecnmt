@@ -124,6 +124,7 @@
                        :output "split.txt"}))
 
 (def randomize
+  ;TODO don't randomize jfleg or nucle
   (aid/build (partial command/shuf "-o")
              (partial (aid/flip get-dataset-path) "random.txt")
              (partial (aid/flip get-dataset-path) "split.txt")))
