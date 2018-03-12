@@ -611,9 +611,7 @@ def mod(num, div):
 
 def make_run_non_training_step(m):
     def run_internal_step(step):
-        return decode_tokens(merge(set_val_("split",
-                                            "non_training",
-                                            m),
+        return decode_tokens(merge(set_val_("split", "non_training", m),
                                    step,
                                    encode(merge(set_val_("split",
                                                          "non_training",
