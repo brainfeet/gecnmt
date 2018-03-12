@@ -22,6 +22,7 @@ import gecnmt.clojure.string as string
 import gecnmt.aid as aid
 import gecnmt.helpers as helpers
 import jfleg.jfleg as jfleg
+import nucle.nucle as nucle
 
 
 def slurp(path):
@@ -503,18 +504,26 @@ def get_steps(m):
             partial(partition, if_(equal(m["split"], "training"),
                                    m["batch_size"],
                                    1)),
-            partition_by(partial(aid.flip(get), "length"),
-                         map(convert_from_tokens,
-                             remove(comp(partial(equal, 0),
-                                         partial(aid.flip(get), "lengths")),
-                                    map(comp(make_set(("lengths", count)),
-                                             remove_tokens),
-                                        filter(comp(partial(greater_than,
-                                                            m["max_length"]),
-                                                    partial(aid.flip(get),
-                                                            "length")),
-                                               map(json.loads,
-                                                   (line_seq(m["file"]))))))))))
+            partition_by(
+                partial(aid.flip(get),
+                        "length"),
+                map(convert_from_tokens,
+                    remove(comp(partial(equal,
+                                        0),
+                                partial(aid.flip(get),
+                                        "lengths")),
+                           map(comp(make_set(("lengths",
+                                              count)),
+                                    remove_tokens),
+                               filter(if_(equal(m["dataset"],
+                                                "simple"),
+                                          comp(partial(greater_than,
+                                                       m["max_length"]),
+                                               partial(aid.flip(get),
+                                                       "length")),
+                                          constantly(True)),
+                                      map(json.loads,
+                                          (line_seq(m["file"]))))))))))
 
 
 def pad_embedding(m):
@@ -661,17 +670,18 @@ def validate_externally(m):
                           "-r",
                           "s/(@@ )|(@@ ?$)//g",
                           get_inferred_path(m["dataset"])],
-                         stdout=file)
+                         stdout=file).wait()
     if equal(m["dataset"], "jfleg"):
         return jfleg.get_score()
-        # TODO return m2
+    return nucle.get_score()
 
 
 def validate(m):
     # TODO implement this function
     m["model"].eval()
     result = {"simple": validate_internally(m),
-              "jfleg": validate_externally(set_val_("dataset", "jfleg", m))}
+              "jfleg": validate_externally(set_val_("dataset", "jfleg", m)),
+              "nucle": validate_externally(set_val_("dataset", "nucle", m))}
     m["model"].train()
     return result
 
@@ -733,6 +743,8 @@ def save(before, after):
     run_(make_compare_save(before, after), ({"checkpoint": "simple",
                                              "comparator": greater_than},
                                             {"checkpoint": "jfleg",
+                                             "comparator": less_than},
+                                            {"checkpoint": "nucle",
                                              "comparator": less_than}))
 
 
@@ -770,7 +782,8 @@ def load(m):
                      "optimizer": get_optimizer(model.parameters()),
                      "step_count": 0,
                      "simple": POSITIVE_INFINITY,
-                     "jfleg": 0})
+                     "jfleg": 0,
+                     "nucle": 0})
 
 
 def train():
@@ -780,7 +793,8 @@ def train():
         loaded = load(set_val_("checkpoint", "recent", hyperparameter))
         reduce(run_training_step,
                loaded,
-               get_steps(merge(loaded, {"file": file,
+               get_steps(merge(loaded, {"dataset": "simple",
+                                        "file": file,
                                         "split": "training"})))
 
 
