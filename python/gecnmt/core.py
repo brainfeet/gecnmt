@@ -767,28 +767,34 @@ def run_training_step(reduction, step):
     return after
 
 
-get_optimizer = comp(optim.Adam,
-                     partial(filter,
-                             partial(aid.flip(getattr), "requires_grad")))
 POSITIVE_INFINITY = math.inf
 
 
-def load(m):
-    # TODO implement this function
-    model = get_model(m)
-    return merge(m, {"model": model,
-                     "optimizer": get_optimizer(model.parameters()),
-                     "step_count": 0,
-                     "simple": POSITIVE_INFINITY,
-                     "jfleg": 0,
-                     "nucle": 0})
+def load(checkpoint):
+    model = get_model(hyperparameter)
+    optimizer = optim.Adam(model.parameters())
+    if path.exists(get_checkpoint_path("recent")):
+        checkpoint_ = torch.load(get_checkpoint_path(checkpoint))
+        model.load_state_dict(checkpoint_["model"])
+        optimizer.load_state_dict(checkpoint_["optimizer"])
+    else:
+        checkpoint_ = {}
+    return merge(hyperparameter,
+                 test_parameter,
+                 {"step_count": 0,
+                  "simple": POSITIVE_INFINITY,
+                  "jfleg": 0,
+                  "nucle": 0},
+                 checkpoint_,
+                 {"model": model,
+                  "optimizer": optimizer})
 
 
 def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as f:
-        loaded = load(set_val_("checkpoint", "recent", hyperparameter))
+        loaded = load("recent")
         reduce(run_training_step,
                loaded,
                get_steps(merge(loaded, {"dataset": "simple",
@@ -800,17 +806,17 @@ def get_corrected_path(m):
     return path.join(helpers.dataset_path, m["dataset"], "corrected.txt")
 
 
+test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
+
+
 def test():
     with open(get_sorted_path(set_val_("split",
                                        "non_training",
                                        test_parameter))) as f:
         spit(get_corrected_path(test_parameter),
-             infer(set_val_("file",
-                            f,
-                            load(merge(hyperparameter, test_parameter)))))
+             infer(set_val_("file", f, load(test_parameter["checkpoint"]))))
 
 
-test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
 parser = argparse.ArgumentParser()
 parser.add_argument("command", type=builtins.str)
 
