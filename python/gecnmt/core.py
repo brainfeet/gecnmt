@@ -239,7 +239,7 @@ partition_by = comp(partial(map, tuple),
 def contains_(coll, k):
     return k in coll
 
-rand = random.random
+
 determiner_ = comp(partial(equal, "DT"),
                    partial(aid.flip(get),
                            "tag_"))
@@ -306,6 +306,14 @@ preposition_ = build(and_,
                           partial(aid.flip(get), "tag_")),
                      comp(partial(contains_, prepositions),
                           partial(aid.flip(get), "lower_")))
+rand = random.random
+to_remove__ = partial(greater_than, hyperparameter["removal_probability"])
+
+
+def to_remove_():
+    return to_remove__(rand())
+
+
 remove_tokens = partial(transform_,
                         "tokens",
                         # if tuple isn't called, tokens don't persist
