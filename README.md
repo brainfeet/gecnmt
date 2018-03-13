@@ -14,7 +14,7 @@ https://leiningen.org/
 
 ### Python
 ```
-conda install -f python/gpu.yml --force
+conda env create -f python/gpu.yml --force
 source activate gecnmt
 python -m spacy download en
 ```
