@@ -201,9 +201,10 @@
 
 (defn make-get-filename-content
   [dataset split]
-  (fn [m]
-    [(get-dataset-path dataset split (get-count-filename m))
-     (str (generate-string m) "\n")]))
+  (juxt (comp (partial get-dataset-path dataset split)
+              get-count-filename)
+        (comp (partial (aid/flip str) "\n")
+              generate-string)))
 
 (defn spit-dataset
   [{:keys [content dataset validation-size]}]
