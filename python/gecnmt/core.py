@@ -310,8 +310,8 @@ rand = random.random
 to_remove__ = partial(greater_than, hyperparameter["removal_probability"])
 
 
-def to_remove_():
-    return to_remove__(rand())
+def to_remove_(x):
+    return and_(to_remove__(rand()), or_(determiner_(x), preposition_(x)))
 
 
 remove_tokens = partial(transform_,
@@ -319,11 +319,7 @@ remove_tokens = partial(transform_,
                         # if tuple isn't called, tokens don't persist
                         compose(tuple,
                                 # TODO make remove persistent
-                                partial(remove,
-                                        build(or_,
-                                              determiner_,
-                                              preposition_))))
-
+                                partial(remove, to_remove_)))
 inflecteds = {"BES",
               "HVS",
               "JJR",
