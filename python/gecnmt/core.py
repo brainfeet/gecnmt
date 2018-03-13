@@ -307,11 +307,11 @@ preposition_ = build(and_,
                      comp(partial(contains_, prepositions),
                           partial(aid.flip(get), "lower_")))
 rand = random.random
-to_remove__ = partial(greater_than, hyperparameter["removal_probability"])
+noise_ = partial(greater_than, hyperparameter["noise_probability"])
 
 
 def to_remove_(x):
-    return and_(to_remove__(rand()), or_(determiner_(x), preposition_(x)))
+    return and_(or_(determiner_(x), preposition_(x)), noise_(rand()))
 
 
 remove_tokens = partial(transform_,
@@ -334,7 +334,7 @@ inflecteds = {"BES",
 
 
 def lemmatize(token):
-    return if_(contains_(inflecteds, token["tag_"]),
+    return if_(and_(contains_(inflecteds, token["tag_"]), noise_(rand())),
                token["lemma_"],
                token["text"])
 
