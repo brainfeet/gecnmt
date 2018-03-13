@@ -769,11 +769,12 @@ def run_training_step(reduction, step):
 
 
 POSITIVE_INFINITY = math.inf
+test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
 
 
 def load(checkpoint):
     model = get_model(hyperparameter)
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), hyperparameter["lr"])
     if path.exists(get_checkpoint_path("recent")):
         checkpoint_ = torch.load(get_checkpoint_path(checkpoint))
         model.load_state_dict(checkpoint_["model"])
@@ -805,9 +806,6 @@ def train():
 
 def get_corrected_path(m):
     return path.join(helpers.dataset_path, m["dataset"], "corrected.txt")
-
-
-test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
 
 
 def test():
