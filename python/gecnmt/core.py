@@ -320,7 +320,9 @@ remove_tokens = partial(transform_,
                         compose(tuple,
                                 # TODO make remove persistent
                                 partial(remove,
-                                        build(or_, determiner_, preposition_))))
+                                        build(or_,
+                                              determiner_,
+                                              preposition_))))
 
 inflecteds = {"BES",
               "HVS",
