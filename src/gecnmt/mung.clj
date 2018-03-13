@@ -210,11 +210,11 @@
   [{:keys [content dataset validation-size]}]
   (run! (partial apply appending-spit-parents)
         (if (= dataset "simple")
-          (s/select [s/ALL s/ALL]
-                    (map (partial aid/funcall map)
-                         (map (partial make-get-filename-content dataset)
-                              ["non_training" "training"])
-                         (split-at validation-size content)))
+          (->> (split-at validation-size content)
+               (map (partial aid/funcall map)
+                    (map (partial make-get-filename-content dataset)
+                         ["non_training" "training"]))
+               (s/select [s/ALL s/ALL]))
           (map (make-get-filename-content dataset "non_training") content))))
 
 (defn split-dataset
@@ -275,9 +275,13 @@
                            (either/right (combine)))
                  (either/right ""))
              _ (parse dataset)
-             _ (either/right (split-sentences dataset))
+             _ (-> dataset
+                   split-sentences
+                   either/right)
              _ (randomize dataset)
-             _ (either/right (get-text dataset))
+             _ (-> dataset
+                   get-text
+                   either/right)
              _ (learn-bpe m)
              _ (apply-bpe dataset)]
             (build-vocabulary dataset)
