@@ -3,6 +3,7 @@ import functools
 import json
 import math
 import os.path as path
+import random
 import subprocess
 
 import funcy
@@ -238,7 +239,7 @@ partition_by = comp(partial(map, tuple),
 def contains_(coll, k):
     return k in coll
 
-
+rand = random.random
 determiner_ = comp(partial(equal, "DT"),
                    partial(aid.flip(get),
                            "tag_"))
