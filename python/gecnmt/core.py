@@ -709,6 +709,10 @@ def set_decoder_loss(m):
     return set_val_("decoder_loss", subtract(m["loss"], m["encoder_loss"]), m)
 
 
+def select_keys(m, ks):
+    return funcy.select_keys(partial(contains_, ks), m)
+
+
 def learn(m):
     m["model"].zero_grad()
     decoded = decode_tokens(merge(m,
@@ -717,13 +721,11 @@ def learn(m):
                                    "split": "training"}))
     decoded["loss"].backward()
     m["optimizer"].step()
-    return set_decoder_loss(transform_("loss",
-                                       partial(aid.flip(divide), m["length"]),
-                                       decoded))
-
-
-def select_keys(m, ks):
-    return funcy.select_keys(partial(contains_, ks), m)
+    return select_keys(set_decoder_loss(transform_("loss",
+                                                   partial(aid.flip(divide),
+                                                           m["length"]),
+                                                   decoded)),
+                       {"loss", "encoder_loss", "decoder_loss"})
 
 
 max = comp(builtins.max,
