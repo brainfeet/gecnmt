@@ -746,12 +746,13 @@ def make_compare_save(before, after):
 
 def save(before, after):
     save_(set_val_("checkpoint", "recent", after))
-    run_(make_compare_save(before, after), ({"checkpoint": "simple",
-                                             "comparator": greater_than},
-                                            {"checkpoint": "jfleg",
-                                             "comparator": less_than},
-                                            {"checkpoint": "nucle",
-                                             "comparator": less_than}))
+    run_(make_compare_save(before, after),
+         ({"checkpoint": "simple",
+           "comparator": greater_than},
+          {"checkpoint": "jfleg",
+           "comparator": less_than},
+          {"checkpoint": "nucle",
+           "comparator": less_than}))
 
 
 def validation_step_(m):
