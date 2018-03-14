@@ -316,9 +316,9 @@ def to_remove_(x):
 
 remove_tokens = partial(transform_,
                         "tokens",
-                        # if tuple isn't called, tokens don't persist
+                        # if tuple isn't called, tokens don't become immutable
                         compose(tuple,
-                                # TODO make remove persistent
+                                # TODO make remove immutable
                                 partial(remove, to_remove_)))
 inflecteds = {"BES",
               "HVS",
@@ -358,12 +358,12 @@ def increment_vector(reduction, c):
     return transform_(nth_path(int(c)), inc, reduction)
 
 
-# TODO make repeat persistent
+# TODO make repeat immutable
 repeat = aid.flip(funcy.repeat)
-# if tuple isn't called, repeat doesn't persist
+# if tuple isn't called, repeat doesn't become immutable
 zero_bag = tuple(repeat(bag_size, 0))
 bag_ = partial(reduce, increment_vector, zero_bag)
-# if tuple isn't called, map doesn't persist
+# if tuple isn't called, map doesn't become immutable
 bag = comp(tuple,
            partial(map, bag_),
            partial(transform_, (FIRST, FIRST), lower_case),
@@ -456,7 +456,8 @@ def get_input_output(input, output):
 
 def pair(m):
     return set_val_("reference_bpes",
-                    apply(map,
+                    apply(comp(tuple,
+                               map),
                           get_input_output,
                           map(tuple, (m["input-reference-bpes"],
                                       m["output-reference-bpes"]))),
