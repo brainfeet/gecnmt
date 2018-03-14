@@ -375,6 +375,7 @@ def get_index(s):
 
 
 get_pretrained_embedding = comp(tuple,
+                                # TODO make map immutable
                                 partial(map, comp(get_index,
                                                   partial(aid.flip(get),
                                                           "lower_"))))
@@ -456,6 +457,7 @@ def get_input_output(input, output):
 
 def pair(m):
     return set_val_("reference_bpes",
+                    # if tuple isn't called, map doesn't become immutable
                     apply(comp(tuple,
                                map),
                           get_input_output,
