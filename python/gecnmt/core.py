@@ -626,13 +626,13 @@ def mod(num, div):
 
 
 def make_run_non_training_step(m):
-    def run_internal_step(step):
+    def run_non_training_step(step):
         return decode_tokens(merge(set_val_("split", "non_training", m),
                                    step,
                                    encode(merge(set_val_("split",
                                                          "non_training",
                                                          m), step))))
-    return run_internal_step
+    return run_non_training_step
 
 
 def validate_internally(m):
