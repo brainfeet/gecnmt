@@ -126,10 +126,12 @@ def encode(m):
                                      get_hidden(set_val_("encoder", True, m)))
     gru_embedding = first(rnn.pad_packed_sequence(first(outputs)))
     linear_embedding = m["model"].encoder_linear(gru_embedding)
+    loss = get_mse(torch.mul(linear_embedding, m["embedded"]),
+                   m["pretrained_embedding"])
     return {"encoder_embedding": torch.cat((gru_embedding, linear_embedding),
                                            2),
-            "loss": get_mse(torch.mul(linear_embedding, m["embedded"]),
-                            m["pretrained_embedding"])}
+            "encoder_loss": divide(loss, m["length"]),
+            "loss": loss}
 
 
 def get_sorted_path(m):
@@ -703,15 +705,21 @@ def divide(*more):
     return divide(first(more), divide(*rest(more)))
 
 
+def set_decoder_loss(m):
+    return set_val_("decoder_loss", subtract(m["loss"], m["encoder_loss"]), m)
+
+
 def learn(m):
     m["model"].zero_grad()
-    loss = decode_tokens(merge(m,
-                               encode(set_val_("split", "training", m)),
-                               {"dataset": "simple",
-                                "split": "training"}))["loss"]
-    loss.backward()
+    decoded = decode_tokens(merge(m,
+                                  encode(set_val_("split", "training", m)),
+                                  {"dataset": "simple",
+                                   "split": "training"}))
+    decoded["loss"].backward()
     m["optimizer"].step()
-    return divide(loss, m["length"])
+    return set_decoder_loss(transform_("loss",
+                                       partial(aid.flip(divide), m["length"]),
+                                       decoded))
 
 
 def select_keys(m, ks):
