@@ -89,15 +89,10 @@ def get_model(m):
     model.encoder_linear = nn.Linear(get_bidirectional_size(m["hidden_size"]),
                                      dim)
     model.embedding = nn.Embedding(bpe_size, m["hidden_size"])
-    model.attention = nn.Linear(get_concatenated_size(m["hidden_size"]),
-                                m["max_length"])
-    model.attention_combiner = nn.Linear(
-        add(get_bidirectional_size(m["hidden_size"]),
-            dim,
-            m["hidden_size"]),
-        m["hidden_size"])
     model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
-    model.out = nn.Linear(m["hidden_size"], bpe_size)
+    model.general = nn.Linear(get_concatenated_size(m["hidden_size"]),
+                              m["hidden_size"])
+    model.context = nn.Linear(m["hidden_size"], bpe_size)
     return get_cuda(model)
 
 
@@ -544,18 +539,6 @@ def get_steps(m):
                                                (line_seq(m["file"]))))))))))))
 
 
-def pad_embedding(m):
-    if equal(count(m["encoder_embedding"]), m["max_length"]):
-        return m["encoder_embedding"]
-    return torch.cat(
-        (m["encoder_embedding"],
-         get_cuda_variable(
-             torch.zeros(*transform_(FIRST,
-                                     partial(subtract,
-                                             m["max_length"]),
-                                     m["encoder_embedding"].size())))))
-
-
 get_nll = nn.NLLLoss()
 
 
@@ -570,42 +553,7 @@ def decode_token(reduction, element):
         input_bpe = reduction["decoder-bpe"]
     decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
                                         0)
-    gru_output, hidden = reduction["model"].decoder_gru(
-        F.relu(
-            reduction["model"].attention_combiner(
-                torch.cat(
-                    (decoder_embedding,
-                     batch_transpose(torch.bmm(
-                         batch_transpose(
-                             F.softmax(
-                                 reduction["model"].attention(
-                                     torch.cat((decoder_embedding,
-                                                reduction["hidden"]),
-                                               2)),
-                                 2)),
-                         batch_transpose(
-                             reduction["padded_embedding"])))),
-                    2))),
-        reduction["hidden"])
-    log_softmax_output = F.log_softmax(
-        reduction["model"].out(first(gru_output)),
-        1)
-    decoder_bpe = torch.squeeze(second(torch.topk(log_softmax_output, 1)), 1)
-    if equal(reduction["dataset"], "simple"):
-        add_loss = partial(add, get_nll(log_softmax_output,
-                                        element["output_reference_bpe"]))
-    else:
-        add_loss = identity
-    return merge(
-        transform_("decoder_bpes",
-                   if_(equal(reduction["dataset"], "simple"),
-                       identity,
-                       partial(set_val_,
-                               END,
-                               (bpe[str(get_first_data(decoder_bpe))],))),
-                   transform_("loss", add_loss, reduction)),
-        {"hidden": hidden,
-         "decoder-bpe": decoder_bpe})
+    return reduction
 
 
 def decode_tokens(m):
@@ -615,7 +563,7 @@ def decode_tokens(m):
                          "hidden": get_hidden(set_val_("encoder", False, m))}),
                   if_(equal(m["dataset"], "simple"),
                       m["reference_bpes"],
-                      repeat(m["max_length"], nothing)))
+                      repeat(m["maximum_bpe_length"], nothing)))
 
 
 class Maybe:
