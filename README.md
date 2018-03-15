@@ -23,7 +23,7 @@ python -m spacy download en
 
 ```
 source activate gecnmt
-lein run munge
+lein run mung
 cd python
 export PYTHONPATH=$(pwd)
 python gecnmt/core.py train

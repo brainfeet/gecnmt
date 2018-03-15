@@ -775,6 +775,10 @@ def validation_step_(m):
     return equal(mod(m["step_count"], m["validation_interval"]), 0)
 
 
+dumps_append_newline = comp(helpers.append_newline, json.dumps)
+log = partial(helpers.appending_spit, "log.txt")
+
+
 def run_training_step(reduction, step):
     trained = learn(merge(reduction, step))
     if validation_step_(reduction):
@@ -787,15 +791,12 @@ def run_training_step(reduction, step):
                                   select_keys(validated, ("simple",))),
                        select_keys(validated, ("jfleg", "nucle")))
     if validation_step_(reduction):
-        helpers.appending_spit(
-            "log.txt",
-            helpers.append_newline(
-                json.dumps(merge(transform_(MAP_VALS,
-                                            get_first_data,
-                                            trained),
-                                 validated,
-                                 select_keys(after,
-                                             {"step_count"})))))
+        log(dumps_append_newline(merge(transform_(MAP_VALS,
+                                                  get_first_data,
+                                                  trained),
+                                       validated,
+                                       select_keys(after,
+                                                   {"step_count"}))))
         save(reduction, after)
     return after
 
@@ -828,6 +829,7 @@ def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
                                      "split": "training"}))) as f:
+        log(dumps_append_newline(hyperparameter))
         loaded = load("recent")
         reduce(run_training_step,
                loaded,
