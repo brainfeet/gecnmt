@@ -70,9 +70,6 @@ def multiply(*more):
     return multiply(first(more), multiply(*rest(more)))
 
 
-get_concatenated_size = partial(multiply, 2)
-
-
 def add(*more):
     if equal(count(more), 2):
         return first(more) + last(more)
@@ -90,7 +87,8 @@ def get_model(m):
                                      dim)
     model.embedding = nn.Embedding(bpe_size, m["hidden_size"])
     model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
-    model.general = nn.Linear(get_concatenated_size(m["hidden_size"]),
+    model.general = nn.Linear(add(get_bidirectional_size(m["hidden_size"]),
+                                  dim),
                               m["hidden_size"])
     model.context = nn.Linear(m["hidden_size"], bpe_size)
     return get_cuda(model)
@@ -554,6 +552,7 @@ def decode_token(reduction, element):
     decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
                                         0)
     _, hidden = reduction["model"].decoder_gru(decoder_embedding)
+    reduction["model"].general(reduction["encoder_embedding"])
     return reduction
 
 
