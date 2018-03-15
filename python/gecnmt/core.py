@@ -783,13 +783,15 @@ def run_training_step(reduction, step):
                                   select_keys(validated, ("simple",))),
                        select_keys(validated, ("jfleg", "nucle")))
     if validation_step_(reduction):
-        helpers.appending_spit("log.txt",
-                               json.dumps(merge(transform_(MAP_VALS,
-                                                           get_first_data,
-                                                           trained),
-                                                validated,
-                                                select_keys(after,
-                                                            {"step_count"}))))
+        helpers.appending_spit(
+            "log.txt",
+            helpers.append_newline(
+                json.dumps(merge(transform_(MAP_VALS,
+                                            get_first_data,
+                                            trained),
+                                 validated,
+                                 select_keys(after,
+                                             {"step_count"})))))
         save(reduction, after)
     return after
 
