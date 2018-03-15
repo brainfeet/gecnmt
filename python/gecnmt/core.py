@@ -553,6 +553,7 @@ def decode_token(reduction, element):
         input_bpe = reduction["decoder-bpe"]
     decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
                                         0)
+    _, hidden = reduction["model"].decoder_gru(decoder_embedding)
     return reduction
 
 
