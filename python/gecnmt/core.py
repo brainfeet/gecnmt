@@ -90,7 +90,10 @@ def get_model(m):
     model.general = nn.Linear(add(get_bidirectional_size(m["hidden_size"]),
                                   dim),
                               m["hidden_size"])
-    model.context = nn.Linear(m["hidden_size"], bpe_size)
+    model.context = nn.Linear(add(get_bidirectional_size(m["hidden_size"]),
+                                  dim,
+                                  m["hidden_size"]),
+                              bpe_size)
     return get_cuda(model)
 
 
@@ -558,10 +561,10 @@ def decode_token(reduction, element):
     decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
                                         0)
     _, hidden = reduction["model"].decoder_gru(decoder_embedding)
-    F.log_softmax(F.tanh(
-        reduction["model"].context(
-            torch.cat(
-                (batch_second_bmm(
+    log_softmax_output = F.log_softmax(
+        F.tanh(
+            reduction["model"].context(
+                torch.cat((torch.squeeze(batch_second_bmm(
                     F.log_softmax(
                         batch_second_bmm(
                             hidden,
@@ -571,11 +574,26 @@ def decode_token(reduction, element):
                                 0,
                                 2)),
                         2),
-                    reduction["encoder_embedding"]),
-                 hidden),
-                2))),
-        2)
-    return reduction
+                    reduction["encoder_embedding"]), 0),
+                           torch.squeeze(hidden, 0)),
+                    1))),
+        1)
+    decoder_bpe = torch.squeeze(second(torch.topk(log_softmax_output, 1)), 1)
+    if equal(reduction["dataset"], "simple"):
+        add_loss = partial(add, get_nll(log_softmax_output,
+                                        element["output_reference_bpe"]))
+    else:
+        add_loss = identity
+    return merge(
+        transform_("decoder_bpes",
+                   if_(equal(reduction["dataset"], "simple"),
+                       identity,
+                       partial(set_val_,
+                               END,
+                               (bpe[str(get_first_data(decoder_bpe))],))),
+                   transform_("loss", add_loss, reduction)),
+        {"hidden": hidden,
+         "decoder-bpe": decoder_bpe})
 
 
 def decode_tokens(m):
