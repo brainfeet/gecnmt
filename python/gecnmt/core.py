@@ -774,7 +774,7 @@ def validation_step_(m):
 
 
 def run_training_step(reduction, step):
-    learn(merge(reduction, step))
+    loss = learn(merge(reduction, step))
     if validation_step_(reduction):
         validated = validate(reduction)
     else:
@@ -784,8 +784,9 @@ def run_training_step(reduction, step):
                                   transform_("step_count", inc, reduction),
                                   select_keys(validated, ("simple",))),
                        select_keys(validated, ("jfleg", "nucle")))
-    # TODO print loss
     if validation_step_(reduction):
+        # TODO log
+        merge(loss, validated, select_keys(after, {"step_count"}))
         save(reduction, after)
     return after
 
