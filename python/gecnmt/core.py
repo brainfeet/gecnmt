@@ -500,7 +500,6 @@ convert_to_variables = comp(pair,
 
 
 def get_steps(m):
-    # TODO cycle
     return if_(equal(m["split"], "training"),
                partial(drop, m["step_count"]),
                identity)(
@@ -528,15 +527,19 @@ def get_steps(m):
                                map(comp(make_set(("lengths",
                                                   count)),
                                         remove_tokens),
-                                   filter(if_(equal(m["dataset"],
-                                                    "simple"),
-                                              comp(partial(greater_than,
-                                                           m["max_length"]),
-                                                   partial(aid.flip(get),
-                                                           "length")),
-                                              constantly(True)),
-                                          map(json.loads,
-                                              (line_seq(m["file"])))))))))))
+                                   if_(equal(m["split"], "training"),
+                                       cycle,
+                                       identity)(
+                                       filter(
+                                           if_(equal(m["dataset"],
+                                                     "simple"),
+                                               comp(partial(greater_than,
+                                                            m["max_length"]),
+                                                    partial(aid.flip(get),
+                                                            "length")),
+                                               constantly(True)),
+                                           map(json.loads,
+                                               (line_seq(m["file"]))))))))))))
 
 
 def pad_embedding(m):
