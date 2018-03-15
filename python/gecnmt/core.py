@@ -533,10 +533,12 @@ def get_steps(m):
                                        filter(
                                            if_(equal(m["dataset"],
                                                      "simple"),
-                                               comp(partial(greater_than,
-                                                            m["max_length"]),
-                                                    partial(aid.flip(get),
-                                                            "length")),
+                                               comp(
+                                                   partial(
+                                                       greater_than,
+                                                       m["maximum_bag_length"]),
+                                                   partial(aid.flip(get),
+                                                           "length")),
                                                constantly(True)),
                                            map(json.loads,
                                                (line_seq(m["file"]))))))))))))
@@ -608,9 +610,9 @@ def decode_token(reduction, element):
 
 def decode_tokens(m):
     return reduce(decode_token,
-                  merge(m, {"decoder_bpes": (),
-                            "hidden": get_hidden(set_val_("encoder", False, m)),
-                            "padded_embedding": pad_embedding(m)}),
+                  merge(m,
+                        {"decoder_bpes": (),
+                         "hidden": get_hidden(set_val_("encoder", False, m))}),
                   if_(equal(m["dataset"], "simple"),
                       m["reference_bpes"],
                       repeat(m["max_length"], nothing)))
