@@ -5,7 +5,7 @@ import spacy
 
 from gecnmt.clojure.core import *
 import gecnmt.clojure.string as string
-import gecnmt.aid as aid
+import gecnmt.helpers as helpers
 
 nlp = spacy.load("en")
 
@@ -34,26 +34,11 @@ def get_parsed_path(path):
     return string.replace(path, "combined.txt", "parsed.txt")
 
 
-def appending_spit(f, content):
-    spit(f, content, append=True)
-
-
-append_newline = partial(aid.flip(str), "\n")
-
-
-def dorun(coll):
-    for _ in coll:
-        pass
-
-
-run_ = comp(dorun, map)
-
-
 def parse():
     with open(get_combined_path()) as f:
-        return run_(comp(partial(appending_spit,
+        return run_(comp(partial(helpers.appending_spit,
                                  get_parsed_path(get_combined_path())),
-                         append_newline,
+                         helpers.append_newline,
                          parse_stringify),
                     line_seq(f))
 

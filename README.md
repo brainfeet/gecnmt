@@ -4,17 +4,37 @@ FIXME: description
 
 ## Installation
 
-Download from http://example.com/FIXME.
+### Clojure
+1. Download the lein script (or on Windows lein.bat)
+2. Place it on your $PATH where your shell can find it (eg. ~/bin)
+3. Set it to be executable (chmod a+x ~/bin/lein)
+4. Run it (lein) and it will download the self-install package
+
+https://leiningen.org/
+
+### Python
+```
+conda env create -f python/gpu.yml --force
+source activate gecnmt
+python -m spacy download en
+```
 
 ## Usage
 
-FIXME: explanation
-
-    $ java -jar gecnmt-0.1.0-standalone.jar [args]
+```
+source activate gecnmt
+lein run munge
+cd python
+export PYTHONPATH=$(pwd)
+python gecnmt/core.py train
+python gecnmt/core.py test
+```
 
 ## Options
 
-FIXME: listing of options this app accepts.
+resources/hyperperameter/hyperperameter.edn
+python/hyperperameter/hyperperameter.json
+python/test_parameter/test_parameter.json
 
 ## Examples
 

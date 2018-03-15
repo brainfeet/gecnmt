@@ -1,4 +1,4 @@
-(ns gecnmt.prepare
+(ns gecnmt.mung
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [clojure.set :as set]
@@ -26,11 +26,14 @@
            (get-dataset-path "simple/original.xml")))
 
 (def parse-extracted
-  (comp (partial mapcat (comp (partial str/join "\n")
-                              (partial remove str/blank?)
-                              str/split-lines
-                              :text
-                              (partial (aid/flip parse-string) true)))
+  (comp (partial mapcat
+                 (comp (partial str/join "\n")
+                       (partial remove (aid/build or
+                                                  (partial re-find #"\|\|")
+                                                  str/blank?))
+                       str/split-lines
+                       :text
+                       (partial (aid/flip parse-string) true)))
         str/split-lines))
 
 (defn slurp-extracted
@@ -69,6 +72,7 @@
                          "python"
                          more)))
 
+;TODO rename this funciton as tokenize
 (def parse
   (comp (partial python
                  "gecnmt/parse.py"
@@ -79,8 +83,7 @@
 (def parse-keywordize
   (partial (aid/flip parse-string) true))
 
-;TODO rename this function as ascii?
-(def is-ascii?
+(def ascii?
   (partial every? (comp (partial > 128)
                         int)))
 
@@ -88,16 +91,16 @@
   (partial re-find #".*\n.*"))
 
 (def split-sentences*
-  (comp (partial map
-                 (comp prn-str
-                       vec
-                       (partial filter
-                                (comp (aid/build and
-                                                 is-ascii?
-                                                 (complement has-newline?)
-                                                 (complement str/blank?))
-                                      :text))
-                       flatten))
+  (comp (partial map prn-str)
+        (partial remove empty?)
+        (partial map (comp vec
+                           (partial filter
+                                    (comp (aid/build and
+                                                     ascii?
+                                                     (complement has-newline?)
+                                                     (complement str/blank?))
+                                          :text))
+                           flatten))
         (partial partition 2)
         (partial partition-by :is_sent_start)
         (partial s/setval* [s/FIRST :is_sent_start] true)
@@ -120,10 +123,14 @@
                        :input  "parsed.txt"
                        :output "split.txt"}))
 
-(def randomize
-  (aid/build (partial command/shuf "-o")
-             (partial (aid/flip get-dataset-path) "random.txt")
-             (partial (aid/flip get-dataset-path) "split.txt")))
+(defn randomize
+  [dataset]
+  ((if (= dataset "simple")
+     (aid/flip (partial command/shuf "-o"))
+     (comp either/right
+           fs/copy))
+    (get-dataset-path dataset "split.txt")
+    (get-dataset-path dataset "random.txt")))
 
 (def append-newline
   (partial (aid/flip str) "\n"))
@@ -137,10 +144,10 @@
                        :output "text.txt"}))
 
 (defn learn-bpe
-  [dataset]
+  [{:keys [dataset operation-count]}]
   (command/python "bin/learn_bpe.py"
                   "-s"
-                  "10000"
+                  operation-count
                   "<"
                   (get-dataset-path dataset "text.txt")
                   ">"
@@ -194,38 +201,38 @@
 
 (defn make-get-filename-content
   [dataset split]
-  (fn [m]
-    [(get-dataset-path dataset split (get-count-filename m))
-     (str (generate-string m) "\n")]))
+  (juxt (comp (partial get-dataset-path dataset split)
+              get-count-filename)
+        (comp (partial (aid/flip str) "\n")
+              generate-string)))
 
 (defn spit-dataset
-  [dataset coll & more]
+  [{:keys [content dataset validation-size]}]
   (run! (partial apply appending-spit-parents)
         (if (= dataset "simple")
-          (s/select [s/ALL s/ALL]
-                    (map (partial aid/funcall map)
-                         (map (partial make-get-filename-content dataset)
-                              ["validation" "training"])
-                         (split-at (first more) coll)))
-          (map (make-get-filename-content dataset "validation") coll))))
+          (->> (split-at validation-size content)
+               (map (partial aid/funcall map)
+                    (map (partial make-get-filename-content dataset)
+                         ["non_training" "training"]))
+               (s/select [s/ALL s/ALL]))
+          (map (make-get-filename-content dataset "non_training") content))))
 
 (defn split-dataset
-  [dataset & more]
+  [{dataset :dataset :as m}]
   (with-open [random-file (->> "random.txt"
                                (get-dataset-path dataset)
                                io/reader)]
     (with-open [bpe-file (->> "bpe.txt"
                               (get-dataset-path dataset)
                               io/reader)]
-      (apply spit-dataset
-             dataset
-             (structure {:bpe    (line-seq bpe-file)
-                         :index  (->> "index.edn"
-                                      (get-dataset-path dataset)
-                                      slurp
-                                      read-string)
-                         :random (line-seq random-file)})
-             more))))
+      (spit-dataset
+        (s/setval :content
+                  (structure {:bpe    (line-seq bpe-file)
+                              :index  (->> "index.edn"
+                                           (get-dataset-path dataset)
+                                           slurp
+                                           read-string)
+                              :random (line-seq random-file)}) m)))))
 
 (def get-source-target
   (juxt identity
@@ -243,8 +250,8 @@
 (defn get-source-targets
   [dataset]
   (if (= dataset "simple")
-    (mapcat (partial get-source-targets* dataset) ["training" "validation"])
-    (get-source-targets* dataset "validation")))
+    (mapcat (partial get-source-targets* dataset) ["training" "non_training"])
+    (get-source-targets* dataset "non_training")))
 
 (def append-file
   (aid/build appending-spit-parents
@@ -262,18 +269,21 @@
         get-source-targets))
 
 (defn mung
-  ;TODO take num_operations as an argument
-  [dataset & more]
+  [{dataset :dataset :as m}]
   (aid/mlet [_ (if (= dataset "simple")
                  (aid/mlet [_ (extract)]
                            (either/right (combine)))
                  (either/right ""))
              _ (parse dataset)
-             _ (either/right (split-sentences dataset))
+             _ (-> dataset
+                   split-sentences
+                   either/right)
              _ (randomize dataset)
-             _ (either/right (get-text dataset))
-             _ (learn-bpe dataset)
+             _ (-> dataset
+                   get-text
+                   either/right)
+             _ (learn-bpe m)
              _ (apply-bpe dataset)]
             (build-vocabulary dataset)
-            (apply split-dataset dataset more)
+            (split-dataset m)
             (sort-by-length dataset)))

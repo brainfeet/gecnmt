@@ -1,11 +1,16 @@
+import argparse
 import functools
 import json
+import math
 import os.path as path
+import random
+import subprocess
 
 import funcy
 import numpy
 import torch
 import torch.autograd as autograd
+import torch.cuda as cuda
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
@@ -16,23 +21,34 @@ import torchtext.vocab as vocab
 from gecnmt.clojure.core import *
 import gecnmt.clojure.string as string
 import gecnmt.aid as aid
+import gecnmt.helpers as helpers
+import jfleg.jfleg as jfleg
+import nucle.nucle as nucle
 
 
 def slurp(path):
-    with open(path) as file:
-        return file.read()
+    with open(path) as f:
+        return f.read()
 
 
 hyperparameter = json.loads(slurp("hyperparameter/hyperparameter.json"))
 dim = 50
 glove = vocab.GloVe("6B", dim)
-vocabulary_size = first(glove.vectors.size())
-embedding_vectors = torch.cat((glove.vectors, torch.zeros(1, glove.dim)))
-bag_size = 128
-dataset_path = "../resources/dataset"
-bpe_path = path.join(dataset_path, "simple/bpe.json")
-bpe = json.loads(slurp(bpe_path))
 count = len
+vocabulary_size = count(glove.vectors)
+
+
+def get_cuda(x):
+    if torch.cuda.is_available():
+        return x.cuda()
+    return x
+
+
+embedding_vectors = get_cuda(torch.cat((glove.vectors,
+                                        torch.zeros(1, glove.dim))))
+bag_size = 128
+bpe_path = path.join(helpers.dataset_path, "simple/bpe.json")
+bpe = json.loads(slurp(bpe_path))
 bpe_size = count(bpe)
 
 
@@ -82,23 +98,23 @@ def get_model(m):
         m["hidden_size"])
     model.decoder_gru = nn.GRU(m["hidden_size"], m["hidden_size"])
     model.out = nn.Linear(m["hidden_size"], bpe_size)
-    return model
+    return get_cuda(model)
 
 
 get_bidirectional_size = partial(multiply, 2)
 
 
 def get_hidden(m):
-    return autograd.Variable(if_(m["encoder"],
-                                 init.kaiming_normal,
-                                 identity)(
-        torch.zeros(if_(m["encoder"],
-                        get_bidirectional_size,
-                        identity)(m["num_layers"]),
-                    if_(equal(m["split"], "training"),
-                        m["batch_size"],
-                        1),
-                    m["hidden_size"])))
+    return get_cuda_variable(
+        if_(m["encoder"],
+            init.kaiming_normal,
+            identity)(torch.zeros(if_(m["encoder"],
+                                      get_bidirectional_size,
+                                      identity)(m["num_layers"]),
+                                  if_(equal(m["split"], "training"),
+                                      m["batch_size"],
+                                      1),
+                                  m["hidden_size"])))
 
 
 get_mse = nn.MSELoss()
@@ -110,14 +126,19 @@ def encode(m):
                                      get_hidden(set_val_("encoder", True, m)))
     gru_embedding = first(rnn.pad_packed_sequence(first(outputs)))
     linear_embedding = m["model"].encoder_linear(gru_embedding)
+    loss = get_mse(torch.mul(linear_embedding, m["embedded"]),
+                   m["pretrained_embedding"])
     return {"encoder_embedding": torch.cat((gru_embedding, linear_embedding),
                                            2),
-            "loss": get_mse(torch.mul(linear_embedding, m["embedded"]),
-                            m["pretrained_embedding"])}
+            "encoder_loss": divide(loss, m["length"]),
+            "loss": loss}
 
 
 def get_sorted_path(m):
-    return path.join(dataset_path, m["dataset"], m["split"], "sorted.txt")
+    return path.join(helpers.dataset_path,
+                     m["dataset"],
+                     m["split"],
+                     "sorted.txt")
 
 
 def reduce(f, *more):
@@ -282,18 +303,25 @@ def or_(*more):
     return or_(first(more), or_(*rest(more)))
 
 
-# TODO check tag_
-preposition_ = comp(partial(contains_, prepositions),
-                    partial(aid.flip(get),
-                            "lower_"))
+preposition_ = build(and_,
+                     comp(partial(equal, "IN"),
+                          partial(aid.flip(get), "tag_")),
+                     comp(partial(contains_, prepositions),
+                          partial(aid.flip(get), "lower_")))
+rand = random.random
+noise_ = partial(greater_than, hyperparameter["noise_probability"])
+
+
+def to_remove_(x):
+    return and_(or_(determiner_(x), preposition_(x)), noise_(rand()))
+
+
 remove_tokens = partial(transform_,
                         "tokens",
-                        # if tuple isn't called, tokens don't persist
+                        # if tuple isn't called, tokens don't become immutable
                         compose(tuple,
-                                # TODO make remove persistent
-                                partial(remove,
-                                        build(or_, determiner_, preposition_))))
-
+                                # TODO make remove immutable
+                                partial(remove, to_remove_)))
 inflecteds = {"BES",
               "HVS",
               "JJR",
@@ -308,7 +336,7 @@ inflecteds = {"BES",
 
 
 def lemmatize(token):
-    return if_(contains_(inflecteds, token["tag_"]),
+    return if_(and_(contains_(inflecteds, token["tag_"]), noise_(rand())),
                token["lemma_"],
                token["text"])
 
@@ -332,12 +360,12 @@ def increment_vector(reduction, c):
     return transform_(nth_path(int(c)), inc, reduction)
 
 
-# TODO make repeat persistent
+# TODO make repeat immutable
 repeat = aid.flip(funcy.repeat)
-# if tuple isn't called, repeat doesn't persist
+# if tuple isn't called, repeat doesn't become immutable
 zero_bag = tuple(repeat(bag_size, 0))
 bag_ = partial(reduce, increment_vector, zero_bag)
-# if tuple isn't called, map doesn't persist
+# if tuple isn't called, map doesn't become immutable
 bag = comp(tuple,
            partial(map, bag_),
            partial(transform_, (FIRST, FIRST), lower_case),
@@ -349,6 +377,7 @@ def get_index(s):
 
 
 get_pretrained_embedding = comp(tuple,
+                                # TODO make map immutable
                                 partial(map, comp(get_index,
                                                   partial(aid.flip(get),
                                                           "lower_"))))
@@ -368,15 +397,12 @@ get_embedded = comp(tuple,
                                       partial(contains_, glove_words),
                                       partial(aid.flip(get),
                                               "lower_"))))
-# TODO implement this function
-convert_from_tokens = comp(
-    apply(comp,
-          map(make_set,
-              {"bag": bag,
-               "embedded": get_embedded,
-               "lengths": count,
-               "pretrained_embedding": get_pretrained_embedding})),
-    remove_tokens)
+convert_from_tokens = apply(
+    comp,
+    map(make_set,
+        {"bag": bag,
+         "embedded": get_embedded,
+         "pretrained_embedding": get_pretrained_embedding}))
 
 
 def sort_by(comp, key_fn, coll):
@@ -431,16 +457,21 @@ def get_input_output(input, output):
 
 def pair(m):
     return set_val_("reference_bpes",
-                    apply(map,
+                    # if tuple isn't called, map doesn't become immutable
+                    apply(comp(tuple,
+                               map),
                           get_input_output,
                           map(tuple, (m["input-reference-bpes"],
                                       m["output-reference-bpes"]))),
                     m)
 
 
-get_variable = comp(batch_transpose,
-                    autograd.Variable)
-embedding = nn.Embedding(embedding_vectors.size(0), embedding_vectors.size(1))
+get_cuda_variable = comp(get_cuda,
+                         autograd.Variable)
+get_transposed_variable = comp(batch_transpose,
+                               get_cuda_variable)
+embedding = get_cuda(nn.Embedding(count(embedding_vectors),
+                                  count(first(embedding_vectors))))
 embedding.weight = nn.Parameter(embedding_vectors)
 embedding.weight.requires_grad = False
 convert_to_variables = comp(pair,
@@ -455,7 +486,7 @@ convert_to_variables = comp(pair,
                                                "input-reference-bpes",
                                                "output-reference-bpes",
                                                "decoder-bpe"),
-                                    get_variable),
+                                    get_transposed_variable),
                             partial(transform_,
                                     multi_path("bag", "embedded"),
                                     torch.FloatTensor),
@@ -469,35 +500,54 @@ convert_to_variables = comp(pair,
 
 
 def get_steps(m):
-    # TODO cycle
-    return map(comp(convert_to_variables,
-                    if_(equal(m["split"], "training"),
-                        identity,
-                        partial(transform_, MAP_VALS, vector)),
-                    partial(apply, merge_with, vector),
-                    partial(sort_by,
-                            greater_than,
-                            partial(aid.flip(get), "lengths"))),
-               apply(concat,
-                     map(partial(partition, if_(equal(m["split"], "training"),
-                                                m["batch_size"],
-                                                1)),
-                         partition_by(partial(aid.flip(get), "length"),
-                                      map(convert_from_tokens,
-                                          filter(comp(
-                                              partial(greater_than,
-                                                      m["max_length"]),
-                                              partial(aid.flip(get), "length")),
-                                              map(json.loads,
-                                                  (line_seq(m["file"])))))))))
+    return if_(equal(m["split"], "training"),
+               partial(drop, m["step_count"]),
+               identity)(
+        map(comp(convert_to_variables,
+                 if_(equal(m["split"], "training"),
+                     identity,
+                     partial(transform_, MAP_VALS, vector)),
+                 partial(apply, merge_with, vector),
+                 partial(sort_by,
+                         greater_than,
+                         partial(aid.flip(get), "lengths"))),
+            mapcat(
+                partial(partition,
+                        if_(equal(m["split"], "training"),
+                            m["batch_size"],
+                            1)),
+                partition_by(
+                    partial(aid.flip(get),
+                            "length"),
+                    map(convert_from_tokens,
+                        remove(comp(partial(equal,
+                                            0),
+                                    partial(aid.flip(get),
+                                            "lengths")),
+                               map(comp(make_set(("lengths",
+                                                  count)),
+                                        remove_tokens),
+                                   if_(equal(m["split"], "training"),
+                                       cycle,
+                                       identity)(
+                                       filter(
+                                           if_(equal(m["dataset"],
+                                                     "simple"),
+                                               comp(partial(greater_than,
+                                                            m["max_length"]),
+                                                    partial(aid.flip(get),
+                                                            "length")),
+                                               constantly(True)),
+                                           map(json.loads,
+                                               (line_seq(m["file"]))))))))))))
 
 
 def pad_embedding(m):
-    if equal(first(m["encoder_embedding"].size()), m["max_length"]):
+    if equal(count(m["encoder_embedding"]), m["max_length"]):
         return m["encoder_embedding"]
     return torch.cat(
         (m["encoder_embedding"],
-         autograd.Variable(
+         get_cuda_variable(
              torch.zeros(*transform_(FIRST,
                                      partial(subtract,
                                              m["max_length"]),
@@ -505,6 +555,10 @@ def pad_embedding(m):
 
 
 get_nll = nn.NLLLoss()
+
+
+def get_first_data(variable):
+    return first(variable.data)
 
 
 def decode_token(reduction, element):
@@ -532,7 +586,8 @@ def decode_token(reduction, element):
                     2))),
         reduction["hidden"])
     log_softmax_output = F.log_softmax(
-        reduction["model"].out(first(gru_output)), 1)
+        reduction["model"].out(first(gru_output)),
+        1)
     decoder_bpe = torch.squeeze(second(torch.topk(log_softmax_output, 1)), 1)
     if equal(reduction["dataset"], "simple"):
         add_loss = partial(add, get_nll(log_softmax_output,
@@ -545,7 +600,7 @@ def decode_token(reduction, element):
                        identity,
                        partial(set_val_,
                                END,
-                               (bpe[str(first(decoder_bpe.data))],))),
+                               (bpe[str(get_first_data(decoder_bpe))],))),
                    transform_("loss", add_loss, reduction)),
         {"hidden": hidden,
          "decoder-bpe": decoder_bpe})
@@ -554,9 +609,7 @@ def decode_token(reduction, element):
 def decode_tokens(m):
     return reduce(decode_token,
                   merge(m, {"decoder_bpes": (),
-                            "hidden": get_hidden(set_val_("encoder",
-                                                          False,
-                                                          m)),
+                            "hidden": get_hidden(set_val_("encoder", False, m)),
                             "padded_embedding": pad_embedding(m)}),
                   if_(equal(m["dataset"], "simple"),
                       m["reference_bpes"],
@@ -580,21 +633,28 @@ def mod(num, div):
     return num % div
 
 
-def make_run_validation_step(m):
-    def run_internal_step(step):
-        return decode_tokens(merge(m, step, encode(merge(m, step))))
-    return run_internal_step
+def make_run_non_training_step(m):
+    def run_non_training_step(step):
+        return decode_tokens(merge(set_val_("split", "non_training", m),
+                                   step,
+                                   encode(merge(set_val_("split",
+                                                         "non_training",
+                                                         m), step))))
+    return run_non_training_step
 
 
 def validate_internally(m):
-    with open(get_sorted_path(merge(m, {"dataset": "simple"}))) as file:
+    with open(get_sorted_path(merge(m, {"dataset": "simple",
+                                        "split": "non_training"}))) as f:
         return numpy.mean(
-            tuple(
-                map(comp(
-                    partial(aid.flip(get), "loss"),
-                    make_run_validation_step(merge(m,
-                                                   {"dataset": "simple"}))),
-                    get_steps(set_val_("file", file, m)))))
+            tuple(map(comp(get_first_data,
+                           partial(aid.flip(get), "loss"),
+                           make_run_non_training_step(set_val_("dataset",
+                                                               "simple",
+                                                               m))),
+                      get_steps(merge(m, {"dataset": "simple",
+                                          "split": "non_training",
+                                          "file": f})))))
 
 
 join = str_join
@@ -605,32 +665,38 @@ def delete_eos(sentence):
 
 
 def infer(m):
-    with open(get_sorted_path(m)) as file:
-        return join("\n",
-                    map(comp(delete_eos,
+    with open(get_sorted_path(set_val_("split", "non_training", m))) as f:
+        return join(map(comp(partial(aid.flip(str), "\n"),
+                             delete_eos,
                              partial(join, " "),
                              partial(aid.flip(get), "decoder_bpes"),
-                             make_run_validation_step(m)),
-                        get_steps(set_val_("file", file, m))))
-
-
-inferred_filename = "inferred.txt"
+                             make_run_non_training_step(m)),
+                        get_steps(merge(m, {"split": "non_training",
+                                            "file": f}))))
 
 
 def get_inferred_path(dataset):
-    return path.join(dataset_path, dataset, inferred_filename)
+    return path.join(helpers.dataset_path, dataset, "inferred.txt")
 
 
 def validate_externally(m):
     spit(get_inferred_path(m["dataset"]), infer(m))
+    with open(helpers.get_replaced_path(m["dataset"]), "w") as f:
+        subprocess.Popen(["sed",
+                          "-r",
+                          "s/(@@ )|(@@ ?$)//g",
+                          get_inferred_path(m["dataset"])],
+                         stdout=f).wait()
+    if equal(m["dataset"], "jfleg"):
+        return jfleg.get_score()
+    return nucle.get_score()
 
 
 def validate(m):
-    # TODO implement this function
     m["model"].eval()
-    result = {"simple": validate_internally(set_val_("split", "validation", m)),
-              "jfleg": validate_externally(merge(m, {"dataset": "jfleg",
-                                                     "split": "validation"}))}
+    result = {"simple": validate_internally(m),
+              "jfleg": validate_externally(set_val_("dataset", "jfleg", m)),
+              "nucle": validate_externally(set_val_("dataset", "nucle", m))}
     m["model"].train()
     return result
 
@@ -641,54 +707,151 @@ def divide(*more):
     return divide(first(more), divide(*rest(more)))
 
 
+def set_decoder_loss(m):
+    return set_val_("decoder_loss", subtract(m["loss"], m["encoder_loss"]), m)
+
+
+def select_keys(m, ks):
+    return funcy.select_keys(partial(contains_, ks), m)
+
+
 def learn(m):
     m["model"].zero_grad()
-    loss = decode_tokens(merge(m,
-                               encode(set_val_("split", "training", m)),
-                               {"dataset": "simple",
-                                "split": "training"}))["loss"]
-    loss.backward()
-    # TODO print loss
-    divide(loss, m["length"])
+    decoded = decode_tokens(merge(m,
+                                  encode(set_val_("split", "training", m)),
+                                  {"dataset": "simple",
+                                   "split": "training"}))
+    decoded["loss"].backward()
     m["optimizer"].step()
-    return loss
+    return select_keys(set_decoder_loss(transform_("loss",
+                                                   partial(aid.flip(divide),
+                                                           m["length"]),
+                                                   decoded)),
+                       {"loss", "encoder_loss", "decoder_loss"})
+
+
+max = comp(builtins.max,
+           vector)
+min = comp(builtins.min,
+           vector)
+
+
+def get_checkpoint_path(s):
+    return path.join("checkpoints", str(s, ".pth.tar"))
+
+
+def less_than(x, y):
+    return x < y
+
+
+def state_dict(x):
+    return x.state_dict()
+
+
+def save_(m):
+    torch.save(transform_(multi_path("model", "optimizer"), state_dict, m),
+               get_checkpoint_path(m["checkpoint"]))
+
+
+def make_compare_save(before, after):
+    def compare_save(m):
+        if m["comparator"](before[m["checkpoint"]], after[m["checkpoint"]]):
+            save_(set_val_("checkpoint", m["checkpoint"], after))
+    return compare_save
+
+
+def save(before, after):
+    save_(set_val_("checkpoint", "recent", after))
+    run_(make_compare_save(before, after),
+         ({"checkpoint": "simple",
+           "comparator": greater_than},
+          {"checkpoint": "jfleg",
+           "comparator": less_than},
+          {"checkpoint": "nucle",
+           "comparator": less_than}))
+
+
+def validation_step_(m):
+    return equal(mod(m["step_count"], m["validation_interval"]), 0)
 
 
 def run_training_step(reduction, step):
-    learn(merge(reduction, step))
-    if equal(mod(reduction["step_count"], reduction["validation_interval"]),
-             0):
-        validate(reduction)
-    return transform_("step_count", inc, reduction)
+    trained = learn(merge(reduction, step))
+    if validation_step_(reduction):
+        validated = validate(reduction)
+    else:
+        validated = {}
+    after = merge_with(max,
+                       merge_with(min,
+                                  transform_("step_count", inc, reduction),
+                                  select_keys(validated, ("simple",))),
+                       select_keys(validated, ("jfleg", "nucle")))
+    if validation_step_(reduction):
+        helpers.appending_spit(
+            "log.txt",
+            helpers.append_newline(
+                json.dumps(merge(transform_(MAP_VALS,
+                                            get_first_data,
+                                            trained),
+                                 validated,
+                                 select_keys(after,
+                                             {"step_count"})))))
+        save(reduction, after)
+    return after
 
 
-def initialize(m):
-    m["model"].encoder_linear.weight = nn.Parameter(
-        init.kaiming_normal(
-            torch.zeros(dim, get_bidirectional_size(m["hidden_size"]))))
-    # TODO initialize the decoder
-    return m["model"]
+POSITIVE_INFINITY = math.inf
+test_parameter = json.loads(slurp("test_parameter/test_parameter.json"))
 
 
-get_optimizer = comp(optim.Adam,
-                     partial(filter,
-                             partial(aid.flip(getattr), "requires_grad")))
-
-
-def load(m):
-    # TODO implement this function
-    model = initialize(set_val_("model", get_model(m), m))
-    return merge(m, {"model": model,
-                     "optimizer": get_optimizer(model.parameters()),
-                     "step_count": 0})
+def load(checkpoint):
+    model = get_model(hyperparameter)
+    optimizer = optim.Adam(model.parameters(), hyperparameter["lr"])
+    if path.exists(get_checkpoint_path("recent")):
+        checkpoint_ = torch.load(get_checkpoint_path(checkpoint))
+        model.load_state_dict(checkpoint_["model"])
+        optimizer.load_state_dict(checkpoint_["optimizer"])
+    else:
+        checkpoint_ = {}
+    return merge(hyperparameter,
+                 test_parameter,
+                 {"step_count": 0,
+                  "simple": POSITIVE_INFINITY,
+                  "jfleg": 0,
+                  "nucle": 0},
+                 checkpoint_,
+                 {"model": model,
+                  "optimizer": optimizer})
 
 
 def train():
     with open(get_sorted_path(merge(hyperparameter,
                                     {"dataset": "simple",
-                                     "split": "training"}))) as file:
-        loaded = load(hyperparameter)
+                                     "split": "training"}))) as f:
+        loaded = load("recent")
         reduce(run_training_step,
                loaded,
-               get_steps(merge(loaded, {"file": file,
+               get_steps(merge(loaded, {"dataset": "simple",
+                                        "file": f,
                                         "split": "training"})))
+
+
+def get_corrected_path(m):
+    return path.join(helpers.dataset_path, m["dataset"], "corrected.txt")
+
+
+def test():
+    with open(get_sorted_path(set_val_("split",
+                                       "non_training",
+                                       test_parameter))) as f:
+        spit(get_corrected_path(test_parameter),
+             infer(set_val_("file", f, load(test_parameter["checkpoint"]))))
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("command", type=builtins.str)
+
+if equal(__name__, "__main__"):
+    get({"train": train,
+         "test": test},
+        parser.parse_args().command)()
