@@ -146,4 +146,5 @@ hyperparameter/hyperparameter.json
 checkpoints/*
 test_parameter/test_parameter.json
 nucle/source_gold
+log.txt
 !.gitkeep

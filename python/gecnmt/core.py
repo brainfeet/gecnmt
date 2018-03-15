@@ -774,7 +774,7 @@ def validation_step_(m):
 
 
 def run_training_step(reduction, step):
-    loss = learn(merge(reduction, step))
+    trained = learn(merge(reduction, step))
     if validation_step_(reduction):
         validated = validate(reduction)
     else:
@@ -785,8 +785,13 @@ def run_training_step(reduction, step):
                                   select_keys(validated, ("simple",))),
                        select_keys(validated, ("jfleg", "nucle")))
     if validation_step_(reduction):
-        # TODO log
-        merge(loss, validated, select_keys(after, {"step_count"}))
+        helpers.appending_spit("log.txt",
+                               json.dumps(merge(transform_(MAP_VALS,
+                                                           get_first_data,
+                                                           trained),
+                                                validated,
+                                                select_keys(after,
+                                                            {"step_count"}))))
         save(reduction, after)
     return after
 
