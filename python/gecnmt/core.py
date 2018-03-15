@@ -558,7 +558,7 @@ def decode_token(reduction, element):
     decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
                                         0)
     _, hidden = reduction["model"].decoder_gru(decoder_embedding)
-    F.tanh(
+    F.log_softmax(F.tanh(
         reduction["model"].context(
             torch.cat(
                 (batch_second_bmm(
@@ -573,7 +573,8 @@ def decode_token(reduction, element):
                         2),
                     reduction["encoder_embedding"]),
                  hidden),
-                2)))
+                2))),
+        2)
     return reduction
 
 
