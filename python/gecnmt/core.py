@@ -397,14 +397,12 @@ get_embedded = comp(tuple,
                                       partial(contains_, glove_words),
                                       partial(aid.flip(get),
                                               "lower_"))))
-convert_from_tokens = comp(
-    apply(comp,
-          map(make_set,
-              {"bag": bag,
-               "embedded": get_embedded,
-               "lengths": count,
-               "pretrained_embedding": get_pretrained_embedding})),
-    remove_tokens)
+convert_from_tokens = apply(
+    comp,
+    map(make_set,
+        {"bag": bag,
+         "embedded": get_embedded,
+         "pretrained_embedding": get_pretrained_embedding}))
 
 
 def sort_by(comp, key_fn, coll):
