@@ -544,6 +544,12 @@ def get_first_data(variable):
     return first(variable.data)
 
 
+batch_second_bmm = comp(batch_transpose,
+                        partial(apply, torch.bmm),
+                        partial(map, batch_transpose),
+                        vector)
+
+
 def decode_token(reduction, element):
     if equal(reduction["split"], "training"):
         input_bpe = element["input_reference_bpe"]
@@ -552,11 +558,11 @@ def decode_token(reduction, element):
     decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
                                         0)
     _, hidden = reduction["model"].decoder_gru(decoder_embedding)
-    torch.bmm(batch_transpose(hidden),
-              torch.transpose(batch_transpose(
-                  reduction["model"].general(reduction["encoder_embedding"])),
-                  1,
-                  2))
+    batch_second_bmm(hidden,
+                     torch.transpose(reduction["model"].general(
+                         reduction["encoder_embedding"]),
+                         0,
+                         2))
     return reduction
 
 
