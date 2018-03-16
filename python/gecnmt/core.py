@@ -574,8 +574,10 @@ def decode_token(reduction, element):
                                 0,
                                 2)),
                         2),
-                    reduction["encoder_embedding"]), 0),
-                           torch.squeeze(hidden, 0)),
+                    reduction["encoder_embedding"]),
+                    0),
+                           torch.squeeze(hidden,
+                                         0)),
                     1))),
         1)
     decoder_bpe = torch.squeeze(second(torch.topk(log_softmax_output, 1)), 1)
