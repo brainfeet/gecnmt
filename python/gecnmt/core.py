@@ -564,17 +564,18 @@ def decode_token(reduction, element):
     log_softmax_output = F.log_softmax(
         F.tanh(
             reduction["model"].context(
-                torch.cat((torch.squeeze(batch_second_bmm(
-                    F.log_softmax(
-                        batch_second_bmm(
-                            hidden,
-                            torch.transpose(
-                                reduction["model"].general(
-                                    reduction["encoder_embedding"]),
-                                0,
-                                2)),
-                        2),
-                    reduction["encoder_embedding"]),
+                torch.cat((torch.squeeze(
+                    batch_second_bmm(
+                        F.log_softmax(
+                            batch_second_bmm(
+                                hidden,
+                                torch.transpose(
+                                    reduction["model"].general(
+                                        reduction["encoder_embedding"]),
+                                    0,
+                                    2)),
+                            2),
+                        reduction["encoder_embedding"]),
                     0),
                            torch.squeeze(hidden,
                                          0)),
