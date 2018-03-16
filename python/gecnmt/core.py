@@ -558,9 +558,9 @@ def decode_token(reduction, element):
         input_bpe = element["input_reference_bpe"]
     else:
         input_bpe = reduction["decoder-bpe"]
-    decoder_embedding = torch.unsqueeze(reduction["model"].embedding(input_bpe),
-                                        0)
-    _, hidden = reduction["model"].decoder_gru(decoder_embedding)
+    _, hidden = reduction["model"].decoder_gru(
+        torch.unsqueeze(reduction["model"].embedding(input_bpe),
+                        0))
     log_softmax_output = F.log_softmax(
         F.tanh(
             reduction["model"].context(
