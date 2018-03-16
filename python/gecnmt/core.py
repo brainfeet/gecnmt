@@ -561,13 +561,13 @@ def decode_token(reduction, element):
     _, hidden = reduction["model"].decoder_gru(
         torch.unsqueeze(reduction["model"].embedding(input_bpe),
                         0))
-    log_softmax_output = F.log_softmax(
+    softmax_output = F.softmax(
         F.tanh(
             reduction["model"].context(
                 torch.cat(
                     (torch.squeeze(
                         batch_second_bmm(
-                            F.log_softmax(
+                            F.softmax(
                                 batch_second_bmm(
                                     hidden,
                                     torch.transpose(
@@ -582,9 +582,9 @@ def decode_token(reduction, element):
                                    0)),
                     1))),
         1)
-    decoder_bpe = torch.squeeze(second(torch.topk(log_softmax_output, 1)), 1)
+    decoder_bpe = torch.squeeze(second(torch.topk(softmax_output, 1)), 1)
     if equal(reduction["dataset"], "simple"):
-        add_loss = partial(add, get_nll(log_softmax_output,
+        add_loss = partial(add, get_nll(softmax_output,
                                         element["output_reference_bpe"]))
     else:
         add_loss = identity
