@@ -244,12 +244,20 @@
         (comp (partial (aid/flip join-paths) "sorted.txt")
               fs/parent)))
 
+(defn shuffle
+  "Return a random permutation of coll"
+  {:added  "1.2"
+   :static true}
+  [^java.util.Collection coll & seed]
+  (let [al (java.util.ArrayList. coll)]
+    (java.util.Collections/shuffle al (java.util.Random. (or (first seed) 0)))
+    (clojure.lang.RT/vector (.toArray al))))
+
 (defn get-source-targets*
   [dataset split]
   (->> #"\d+"
        (fs/find-files (get-dataset-path dataset split))
-       (sort-by (comp read-string
-                      fs/name))
+       shuffle
        (map get-source-target)))
 
 (defn get-source-targets
