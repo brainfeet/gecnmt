@@ -90,7 +90,8 @@
 (def has-newline?
   (partial re-find #".*\n.*"))
 
-(def split-sentences*
+(defn make-split-sentences*
+  [dataset]
   (comp (partial map prn-str)
         (partial remove empty?)
         (partial map (comp vec
@@ -99,11 +100,13 @@
                                                      ascii?
                                                      (complement has-newline?)
                                                      (complement str/blank?))
-                                          :text))
-                           flatten))
-        (partial partition 2)
-        (partial partition-by :is_sent_start)
-        (partial s/setval* [s/FIRST :is_sent_start] true)
+                                          :text))))
+        (if (= dataset "simple")
+          (comp (partial map flatten)
+                (partial partition 2)
+                (partial partition-by :is_sent_start)
+                (partial s/setval* [s/FIRST :is_sent_start] true))
+          vector)
         parse-keywordize))
 
 (defn make-process-lines
@@ -118,10 +121,12 @@
            (run! (partial appending-spit-parents (get-dataset-path dataset
                                                                    output)))))))
 
-(def split-sentences
-  (make-process-lines {:f      (partial mapcat split-sentences*)
-                       :input  "parsed.txt"
-                       :output "split.txt"}))
+(defn split-sentences
+  [dataset]
+  ((make-process-lines {:f      (partial mapcat (make-split-sentences* dataset))
+                        :input  "parsed.txt"
+                        :output "split.txt"})
+    dataset))
 
 (defn randomize
   [dataset]
