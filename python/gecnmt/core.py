@@ -532,7 +532,7 @@ def get_steps(m):
                                                comp(
                                                    partial(
                                                        greater_than,
-                                                       m["maximum_bag_length"]),
+                                                       m["maximum_bpe_length"]),
                                                    partial(aid.flip(get),
                                                            "length")),
                                                constantly(True)),
