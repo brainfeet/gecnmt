@@ -596,6 +596,7 @@ def decode_token(reduction, element):
                                END,
                                (bpe[str(get_first_data(decoder_bpe))],))),
                    transform_("loss", add_loss, reduction)),
+        # TODO don't pass hidden
         {"hidden": hidden,
          "decoder-bpe": decoder_bpe})
 
