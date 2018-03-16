@@ -93,7 +93,8 @@ def get_model(m):
     model.context = nn.Linear(add(get_bidirectional_size(m["hidden_size"]),
                                   dim,
                                   m["hidden_size"]),
-                              bpe_size)
+                              m["hidden_size"])
+    model.out = nn.Linear(m["hidden_size"], bpe_size)
     return get_cuda(model)
 
 
@@ -563,25 +564,26 @@ def decode_token(reduction, element):
                         0),
         reduction["hidden"])
     log_softmaxed = F.log_softmax(
-        F.tanh(
-            reduction["model"].context(
-                torch.cat(
-                    (torch.squeeze(
-                        batch_second_bmm(
-                            F.softmax(
-                                batch_second_bmm(
-                                    hidden,
-                                    torch.transpose(
-                                        reduction["model"].general(
-                                            reduction["encoder_embedding"]),
-                                        0,
-                                        2)),
-                                2),
-                            reduction["encoder_embedding"]),
-                        0),
-                     torch.squeeze(hidden,
-                                   0)),
-                    1))),
+        reduction["model"].out(
+            F.tanh(
+                reduction["model"].context(
+                    torch.cat(
+                        (torch.squeeze(
+                            batch_second_bmm(
+                                F.softmax(
+                                    batch_second_bmm(
+                                        hidden,
+                                        torch.transpose(
+                                            reduction["model"].general(
+                                                reduction["encoder_embedding"]),
+                                            0,
+                                            2)),
+                                    2),
+                                reduction["encoder_embedding"]),
+                            0),
+                         torch.squeeze(hidden,
+                                       0)),
+                        1)))),
         1)
     decoder_bpe = torch.squeeze(second(torch.topk(log_softmaxed, 1)), 1)
     if equal(reduction["dataset"], "simple"):
