@@ -584,8 +584,9 @@ def decode_token(reduction, element):
         1)
     decoder_bpe = torch.squeeze(second(torch.topk(softmax_output, 1)), 1)
     if equal(reduction["dataset"], "simple"):
-        add_loss = partial(add, get_nll(softmax_output,
-                                        element["output_reference_bpe"]))
+        add_loss = partial(add,
+                           get_nll(softmax_output,
+                                   element["output_reference_bpe"]))
     else:
         add_loss = identity
     return merge(
