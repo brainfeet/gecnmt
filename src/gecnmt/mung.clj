@@ -204,23 +204,36 @@
   (comp str
         :length))
 
+(def generate-line
+  (comp (partial (aid/flip str) "\n")
+        generate-string))
+
 (defn make-get-filename-content
   [dataset split]
   (juxt (comp (partial get-dataset-path dataset split)
               get-count-filename)
-        (comp (partial (aid/flip str) "\n")
-              generate-string)))
+        generate-line))
+
+(defn spit+
+  [f & more]
+  (-> f
+      fs/parent
+      fs/mkdirs)
+  (apply spit f more))
 
 (defn spit-dataset
   [{:keys [content dataset validation-size]}]
-  (run! (partial apply appending-spit-parents)
-        (if (= dataset "simple")
+  (if (= dataset "simple")
+    (run! (partial apply appending-spit-parents)
           (->> (split-at validation-size content)
                (map (partial aid/funcall map)
                     (map (partial make-get-filename-content dataset)
                          ["non_training" "training"]))
-               (s/select [s/ALL s/ALL]))
-          (map (make-get-filename-content dataset "non_training") content))))
+               (s/select [s/ALL s/ALL])))
+    (->> content
+         (map generate-line)
+         str/join
+         (spit+ (get-dataset-path dataset "non_training" "sorted.txt")))))
 
 (defn split-dataset
   [{dataset :dataset :as m}]
